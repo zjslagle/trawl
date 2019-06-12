@@ -13,6 +13,7 @@ require(RODBC)
 require(lubridate)
 require(stringr)
 require(here)
+require(xlsx)
 library(tidyverse)
 
 
@@ -79,8 +80,7 @@ spp_codes %>%
          latin_name = gsub("(?<=\\()[^()]*(?=\\))(*SKIP)(*F)|.", "", species, perl=T)) %>%
   select(common_name, latin_name, code = interagency.species.code) %>%
   mutate(latin_name = case_when(common_name == "Sand shiner" ~ "Notropis stramineus", #fix old latin name
-                                T ~ latin_name)) %>%
-  filter(common_name == "Sand shiner") -> spp_codes
+                                T ~ latin_name))  -> spp_codes
 
 ### Fix errors in each dataset ###########################
 #
@@ -116,8 +116,13 @@ all_catch %>%
 
 
 #switch ON crns for length data
-all_lengths %<>% mutate(crn = case_when(agency == "ON" ~ yrsam,    
-                                  T ~ crn))
+all_lengths %<>% mutate(projcode = case_when(projcode %in% c("LEA-IF00_001","LEA_IF00-001") ~ "LEA_IF00_001",
+                                             T ~ projcode),
+                        crn = case_when(agency == "ON" ~ yrsam,    
+                                  T ~ crn)) %>%
+  left_join(all_effort %>% select(projcode, year, agency, effdist, effstat) %>% unique) %>% #THIS MUST BE UNIQUE VALUES
+  filter(year != 1987|effstat == 1|!is.na(effdist)) 
+
 
 
 

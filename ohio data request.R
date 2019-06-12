@@ -78,3 +78,17 @@ all_catch %>%
   arrange(latin_name) %>%
   write_csv(here("data", "WB trawl spp list.csv"))
 
+
+### All Ohio trawl data to Excel   ############################################
+
+# filter catch first, have to join effstat != 1 from effort to filter catches
+ohio_only_catch_raw %<>%
+  left_join(ohio_only_effort_raw %>% select(projcode, crn, effstat) %>% unique)
+  filter(effstat == 1, year != 1987)
+
+ohio_only_effort_raw %<>%
+  filter(effstat == 1, year != 1987)
+  
+  
+write_csv(ohio_only_effort_raw, path = here("data", "Ohio WB trawl effort data request.csv"))
+write_csv(ohio_only_catch_raw, path = here("data", "Ohio WB trawl catch data request.csv"))

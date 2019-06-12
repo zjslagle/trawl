@@ -31,18 +31,3 @@ mean_lengths %>%
 ggsave(here("figures", "Fig 4_3_3 mean lengths.png"), width = 7, height = 5, units = "in",dpi = 600)
 
 
-[master fb0e11f] All FTG graphs finished
-Committer: Slagle <slaglez@dnr.state.oh.us>
-  Your name and email address were configured automatically based
-on your username and hostname. Please check that they are accurate.
-You can suppress this message by setting them explicitly. Run the
-following command and follow the instructions in your editor to edit
-your configuration file:
-  
-  git config --global --edit
-
-After doing this, you may fix the identity used for this commit with:
-  
-  git commit --amend --reset-author
-
-
