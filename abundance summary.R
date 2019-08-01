@@ -6,7 +6,7 @@ source("Read Trawl Data.R")
 
 # sum over CRN (only summarizes ~10 rows)
 all_catch %>%
-  group_by(projcode, year, agency, crn, species, age) %>% 
+  group_by(projcode, year, agency, crn, species, agecode) %>% 
   summarize(sum_catch = sum(catch)) %>% ungroup() %>%
   left_join(all_effort %>% 
               select(projcode, year, agency, crn, depth, effdur, effdist, effstat, totdist, longitude, latitude)) %>%
@@ -24,62 +24,62 @@ draft_catch_summary %>%
                              species == 184 ~ 180, # redside dace -> 180
                              T ~ species),
          spp_agegroup = case_when(species == 61 ~ "alewife_all",
-                                  species == 63 & age == 1 ~ "giz_shad_yoy",
-                                  species == 91 & age == 1 ~ "whitefish_yoy",
-                                  species == 91 & age > 1 ~ "whitefish_adult",
-                                  species == 121 & age == 1 ~ "smelt_yoy",
-                                  species == 121 & age > 1 ~ "smelt_adult",
+                                  species == 63 & agecode == 1 ~ "giz_shad_yoy",
+                                  species == 91 & agecode == 1 ~ "whitefish_yoy",
+                                  species == 91 & agecode > 1 ~ "whitefish_adult",
+                                  species == 121 & agecode == 1 ~ "smelt_yoy",
+                                  species == 121 & agecode > 1 ~ "smelt_adult",
                                   species == 161 ~ "quillback_all",
-                                  species == 163 & age == 1 ~ "w_sucker_yoy",
-                                  species == 163 & age > 1 ~ "w_sucker_adult",
+                                  species == 163 & agecode == 1 ~ "w_sucker_yoy",
+                                  species == 163 & agecode > 1 ~ "w_sucker_adult",
                                   species == 166 ~ "buffalo_all",
                                   species %in% c(168, 169, 170, 171, 172, 173, 177) ~ "redhorse_all", #ZJS changed this from SAS script to include all redhorse
-                                  species == 180 & age == 1 ~ "notropis_yoy",
-                                  species == 180 & age > 1 ~ "notropis_adult",
+                                  species == 180 & agecode == 1 ~ "notropis_yoy",
+                                  species == 180 & agecode > 1 ~ "notropis_adult",
                                   species == 181 ~ "goldfish_all",
-                                  species == 186 & age > 1 ~ "carp_adult",
-                                  species == 191 & age == 1 ~ "s_chub_yoy",
-                                  species == 191 & age > 1 ~ "s_chub_adult",
-                                  species == 196 & age == 1 ~ "em_shiner_yoy",
-                                  species == 196 & age > 1 ~ "em_shiner_adult",
-                                  species == 201 & age == 1 ~ "spot_shiner_yoy",
-                                  species == 201 & age > 1 ~ "spot_shiner_adult",
-                                  species == 204 & age == 1 ~ "sand_shiner_yoy",
+                                  species == 186 & agecode > 1 ~ "carp_adult",
+                                  species == 191 & agecode == 1 ~ "s_chub_yoy",
+                                  species == 191 & agecode > 1 ~ "s_chub_adult",
+                                  species == 196 & agecode == 1 ~ "em_shiner_yoy",
+                                  species == 196 & agecode > 1 ~ "em_shiner_adult",
+                                  species == 201 & agecode == 1 ~ "spot_shiner_yoy",
+                                  species == 201 & agecode > 1 ~ "spot_shiner_adult",
+                                  species == 204 & agecode == 1 ~ "sand_shiner_yoy",
                                   species == 208 ~ "bluntnose_all",
                                   species == 209 ~ "fathead_all",
                                   species == 216 ~ "stoneroller_all",
                                   species == 232 ~ "y_bullhead_all", #BUTTERCAT
                                   species == 233 ~ "b_bullhead_all",
-                                  species == 234 & age == 1 ~ "channel_cat_yoy",
-                                  species == 234 & age > 1 ~ "channel_cat_adult",
-                                  species == 235 & age == 1 ~ "stonecat_all",
-                                  species == 291 & age == 1 ~ "troutperch_yoy",
-                                  species == 291 & age > 1 ~ "troutperch_adult",
-                                  species == 301 & age == 1 ~ "w_perch_yoy",
-                                  species == 301 & age == 2 ~ "w_perch_yrg",
-                                  species == 301 & age > 2 ~ "w_perch_adult",
-                                  species == 302 & age == 1 ~ "w_bass_yoy",
+                                  species == 234 & agecode == 1 ~ "channel_cat_yoy",
+                                  species == 234 & agecode > 1 ~ "channel_cat_adult",
+                                  species == 235 & agecode == 1 ~ "stonecat_all",
+                                  species == 291 & agecode == 1 ~ "troutperch_yoy",
+                                  species == 291 & agecode > 1 ~ "troutperch_adult",
+                                  species == 301 & agecode == 1 ~ "w_perch_yoy",
+                                  species == 301 & agecode == 2 ~ "w_perch_yrg",
+                                  species == 301 & agecode > 2 ~ "w_perch_adult",
+                                  species == 302 & agecode == 1 ~ "w_bass_yoy",
                                   species == 311 ~ "rock_bass_all",
                                   species == 313 ~ "pumpkin_all",
                                   species == 314 ~ "bluegill_all",
-                                  species == 316 & age == 1 ~ "smb_yoy",
-                                  species == 316 & age > 1 ~ "smb_adult",
+                                  species == 316 & agecode == 1 ~ "smb_yoy",
+                                  species == 316 & agecode > 1 ~ "smb_adult",
                                   species == 317 ~ "lmb_yoy",
                                   species == 318 ~ "w_crappie_all",
                                   species == 319 ~ "b_crappie_all",
-                                  species == 331 & age == 1 ~ "y_perch_yoy",
-                                  species == 331 & age == 2 ~ "y_perch_yrg",
-                                  species == 331 & age > 2 ~ "y_perch_adult",
-                                  species == 334 & age == 1 ~ "walleye_yoy",
-                                  species == 334 & age == 2 ~ "walleye_yrg",
-                                  species == 334 & age > 2 ~ "walleye_adult",
-                                  species == 342 & age == 1 ~ "logperch_yoy",
-                                  species == 342 & age > 1 ~ "logperch_adult",
+                                  species == 331 & agecode == 1 ~ "y_perch_yoy",
+                                  species == 331 & agecode == 2 ~ "y_perch_yrg",
+                                  species == 331 & agecode > 2 ~ "y_perch_adult",
+                                  species == 334 & agecode == 1 ~ "walleye_yoy",
+                                  species == 334 & agecode == 2 ~ "walleye_yrg",
+                                  species == 334 & agecode > 2 ~ "walleye_adult",
+                                  species == 342 & agecode == 1 ~ "logperch_yoy",
+                                  species == 342 & agecode > 1 ~ "logperch_adult",
                                   species == 344 ~ "b_darter_all",
                                   species == 361 ~ "brook_sil_all",
                                   species == 366 ~ "goby_adult", #all gobies thrown into adult
-                                  species == 371 & age == 1 ~ "drum_yoy",
-                                  species == 371 & age > 1 ~ "drum_adult",
+                                  species == 371 & agecode == 1 ~ "drum_yoy",
+                                  species == 371 & agecode > 1 ~ "drum_adult",
                                   species == 31 ~ "sturgeon_all",
                                   species == 81 ~ "lake_trout_all",
                                   T ~ "dont_care")) -> draft_catch_summary
@@ -160,10 +160,10 @@ catch_summary %>%
           vol_swept = area_swept * gape,
           fish_per_area = sum_catch/area_swept) %>% #catch per m^2
   group_by(year, crn, spp_agegroup, agency, state, area_swept, depth_strata) %>%
-  summarize(fish_per_area = sum(fish_per_area)) %>%
+    summarize(fish_per_area = sum(fish_per_area)) %>%
   ungroup -> catch_summary_by_area
 
-# now we create the functional groupings (spiny-rayed, clupeid, soft-rayed, and total) in new tibble
+### Create functional groupings (spiny-rayed, clupeid, soft-rayed, and total) in new tibble   ################
 catch_summary_by_area %>%
   group_by(year, crn, agency, state, area_swept, depth_strata) %>%
   summarize(clupeid = sum(fish_per_area[spp_agegroup %in% c("alewife_all", "giz_shad_yoy")]),
@@ -203,14 +203,14 @@ yearly_abundance_by_agency %>%
                                                            depth_strata == "deep" ~ mean_fish * 1.244E+9),
                                  state == "OH" ~ case_when(depth_strata == "shallow" ~ mean_fish * 9.281E+8,
                                                            depth_strata == "deep" ~ mean_fish * 1.413E+9)),
-         rel_abundance = total_abundance/375320) -> yearly_abundance_by_agency # number per hectare
+         abundance_per_ha = total_abundance/375320) -> yearly_abundance_by_agency # number per hectare
 
 
 # now create West Basin summary, calc abs abundance and fish/ha, then saves totals
 yearly_abundance_by_agency %>%
   group_by(year, spp_agegroup) %>%
   summarize(total_abundance = sum(total_abundance),
-           rel_abundance = total_abundance/375320) %>%
+            abundance_per_ha = total_abundance/375320) %>%
   ungroup %>%
   mutate(forage_fish = case_when(spp_agegroup %in% c("em_shiner_adult", "em_shiner_yoy", "spot_shiner_adult", "spot_shiner_yoy", "giz_shad_yoy",
                                                       "notropis_yoy", "notropis_adult", "sand_shiner_yoy", "s_chub_yoy", "s_chub_adult", 
@@ -220,18 +220,21 @@ yearly_abundance_by_agency %>%
                                  T ~ FALSE)) %>%
   filter(forage_fish == TRUE) %>%        
   select(-total_abundance, -forage_fish) -> yearly_abundance_tall # use this for graphing
-  
+
+write_csv(yearly_abundance_tall, here("data", "West Basin absolute abundance tall format.csv"))
+
+
 # spread data and print - similar to older FTG SAS output
 yearly_abundance_tall %>%
-  spread(key = spp_agegroup, value = rel_abundance) %>%
+  spread(key = spp_agegroup, value = abundance_per_ha) %>%
   select(year, drum_yoy, em_shiner_adult, em_shiner_yoy, goby_adult, notropis_adult, notropis_yoy, s_chub_adult, s_chub_yoy, sand_shiner_yoy,
          smelt_adult, smelt_yoy, spot_shiner_adult, spot_shiner_yoy, troutperch_adult, troutperch_yoy, w_bass_yoy,
          w_perch_yoy, walleye_yoy, y_perch_yoy, clupeid, soft_ray, spiny_ray, all_fish)-> yearly_abundance_total
-  
-write_csv(yearly_abundance_total, here("data", "West Basin relative abundance.csv"))
+
+write_csv(yearly_abundance_total, here("data", "West Basin absolute abundance.csv"))
 
 
-# write CSV wite same but split by state
+# write CSV with same but split by state
 yearly_abundance_by_agency %>%
   group_by(year, state, spp_agegroup) %>%
   summarize(total_abundance = sum(total_abundance),
@@ -247,11 +250,14 @@ yearly_abundance_by_agency %>%
   select(-total_abundance) %>% #remove this and next line for tall data
   spread(key = spp_agegroup, value = rel_abundance) -> yearly_abundance_by_state
 
-write_csv(yearly_abundance_by_state, here("data", "West Basin relative abundance by agency.csv"))
+write_csv(yearly_abundance_by_state, here("data", "West Basin absolute abundance by agency.csv"))
 
 
 
-
-
+# old sites where state != agency. But why? 
+catch_summary_by_area %>% 
+  mutate(test = (agency == state)) %>% 
+  filter(test == FALSE) %>% 
+  select(crn) %>% unique %>% view
 
 

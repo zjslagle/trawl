@@ -90,5 +90,5 @@ ohio_only_effort_raw %<>%
   filter(effstat == 1, year != 1987)
   
   
-write_csv(ohio_only_effort_raw, path = here("data", "Ohio WB trawl effort data request.csv"))
-write_csv(ohio_only_catch_raw, path = here("data", "Ohio WB trawl catch data request.csv"))
+write_csv(ohio_only_effort_raw, path = here("data", "data requests", "Ohio WB trawl effort data request.csv"))
+write_csv(ohio_only_catch_raw, path = here("data", "data requests", "Ohio WB trawl catch data request.csv"))

@@ -3,6 +3,7 @@
 #       for Forage TG reporting 
 #
 #     Much of the processing is based on SAS code written by Jeff Tyson (I think)
+#     This code written by Zak Slagle, ODNR-SARE, Started November 2018
 
 
 ### Load libraries   ##################################
@@ -53,26 +54,60 @@ names(on_lengths_raw) %<>% tolower
 names(on_catch_raw) %<>% tolower
 names(on_effort_raw) %<>% tolower
 
-#full joins across all similar dataframes
-all_effort <- full_join(oh_effort_raw, on_effort_raw)
-all_catch <- full_join(oh_catch_raw, on_catch_raw) %>% select(-year) #OH dataframe lacks year, so remove it
-all_lengths <- full_join(oh_lengths_raw, on_catch_raw)
+#reformat effort data to match
+oh_effort_raw %>%
+  mutate(crn = as.character(crn),
+         agency = "OH",
+         projcode = as.character(projcode)) -> oh_effort_fixed
 
-#replace agency = NA with agency = OH, since the OH data don't have an agency column. Also, make crn and yrsam into 
-#     char vectors b/c we want to merge them
-all_catch %<>% mutate(agency = ifelse(is.na(agency), "OH", "ON"),
-                      crn = as.character(crn),
-                      yrsam = as.character(yrsam))
-all_lengths %<>% mutate(agency = ifelse(is.na(agency), "OH", "ON"),
-                        crn = as.character(crn),
-                        yrsam = as.character(yrsam))
-all_effort %<>% mutate(crn = as.character(crn),
-                       yrsam = as.character(yrsam))
+on_effort_raw %>%
+  mutate(crn = as.character(yrsam),
+         agency = "ON",
+         projcode = as.character(projcode)) -> on_effort_fixed
+
+#reformat catch data to match
+oh_catch_raw %>%
+  mutate(crn = as.character(crn),
+         agency = "OH",
+         agecode = age,
+         projcode = as.character(projcode)) %>%
+  select(-age) -> oh_catch_fixed
+
+on_catch_raw %>%
+  mutate(crn = as.character(yrsam),
+         projcode = as.character(projcode), 
+         agecode = age,
+         agency = "ON") %>%
+  select(-yrsam, -year, -age) -> on_catch_fixed
+
+#reformat length data to match 
+on_lengths_raw %>%
+  mutate(crn = as.character(yrsam),
+         agency = as.character(agency),
+         projcode = as.character(projcode)) %>%
+  select(-yrsam, -year) -> on_lengths_fixed
+
+oh_lengths_raw %>%
+  mutate(crn = as.character(crn),
+         projcode = as.character(projcode),
+         agency = "OH") -> oh_lengths_fixed
+
+
+
+
+
+
+#full joins across all similar dataframes
+all_effort <- full_join(oh_effort_fixed, on_effort_fixed)
+all_catch <- full_join(oh_catch_fixed, on_catch_fixed)
+all_lengths <- full_join(oh_lengths_fixed, on_lengths_fixed)
 
 #use this to check for data errors
 #all_catch$projcode %>% unique %>% sort 
 
-#reformat species codes
+
+
+### reformat species codes ###############################################
 names(spp_codes) %<>% tolower %<>% make.names
 #split "species" into common and latin names
 spp_codes %>%
@@ -101,29 +136,21 @@ all_effort %>%
          year = case_when(year == 12 ~ 2012,
                           T ~ year),
          longitude = case_when(longitude > 0 ~ longitude * -1,
-                               T ~ longitude),
-         crn = case_when(agency == "ON" ~ yrsam,    
-                         T ~ crn)) -> all_effort
+                               T ~ longitude)) -> all_effort
 
 # fix errors in catch
-all_catch %>%
+all_catch %<>%
   mutate(projcode = case_when(projcode %in% c("LEA-IF00_001","LEA_IF00-001") ~ "LEA_IF00_001",
-                              T ~ projcode),
-         crn = case_when(agency == "ON" ~ yrsam,    
-                         T ~ crn)) %>% #fix mismatch between underscores and dashes
-  left_join(all_effort %>% select(projcode, year, agency, crn, depth, effdur, effdist, effstat, totdist) %>% unique) %>% #THIS MUST BE UNIQUE VALUES
-  filter(year != 1987|effstat == 1|!is.na(effdist)) -> all_catch
+                              T ~ projcode)) %>% #fix mismatch between underscores and dashes
+  left_join(all_effort %>% select(projcode, year, agency, crn, depth, effdur, effdist, effstat) %>% unique) %>% #THIS MUST BE UNIQUE VALUES
+  filter(year != 1987|effstat == 1|!is.na(effdist))
 
 
-#switch ON crns for length data
+#fix bad projcodes and remove bad trawls (1987, effstat/effdist)
 all_lengths %<>% mutate(projcode = case_when(projcode %in% c("LEA-IF00_001","LEA_IF00-001") ~ "LEA_IF00_001",
-                                             T ~ projcode),
-                        crn = case_when(agency == "ON" ~ yrsam,    
-                                  T ~ crn)) %>%
-  left_join(all_effort %>% select(projcode, year, agency, effdist, effstat) %>% unique) %>% #THIS MUST BE UNIQUE VALUES
-  filter(year != 1987|effstat == 1|!is.na(effdist)) 
-
-
-
-
+                                             T ~ projcode)) %>%
+  left_join(all_effort %>% select(projcode, crn, year, effdist, effstat) %>% unique) %>% #THIS MUST BE UNIQUE VALUES
+  filter(year != 1987, effstat == 1, !is.na(effdist)) %>%
+  select(-year, -effdist, -effstat) %>%
+  arrange(projcode, crn, species, agecode)
 
