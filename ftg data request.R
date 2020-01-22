@@ -13,3 +13,4 @@ write.xlsx(as.data.frame(all_catch), file = here("data", "FTG trawl data.xlsx"),
 write_csv(all_lengths, path = here("data", "data requests", "Interagency WB trawl lengths data request.csv"))
 write_csv(spp_codes, path = here("data", "spp_codes.csv"))
 
+write_csv(all_effort %>% arrange(year, crn), path = here("data", "data requests", "Interagency WB trawl effort.csv"))

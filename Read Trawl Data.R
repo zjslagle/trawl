@@ -31,16 +31,21 @@ sqlTables(trawl_database)
 
 #read in required data from trawl - note that if you don't use as_tibble, sqlFetch() returns an odd
 #     tbl with sqlFetch(trawl_database, "OH Lengths") as the one obs
-oh_lengths_raw <- as_tibble(sqlFetch(trawl_database, "OH Lengths"))
+oh_lengths_raw <- as_tibble(sqlFetch(trawl_database, "OH LENGTH"))
 oh_catch_raw <- as_tibble(sqlFetch(trawl_database, "OH Catch"))
 oh_effort_raw <- as_tibble(sqlFetch(trawl_database, "OH Effort"))
 on_lengths_raw <- as_tibble(sqlFetch(trawl_database, "ON LENGTH PARSED"))
 on_catch_raw <- as_tibble(sqlFetch(trawl_database, "ON CATCH PARSED"))
 on_effort_raw <- as_tibble(sqlFetch(trawl_database, "ON EFFORT PARSED"))
-spp_codes <- as_tibble(sqlFetch(trawl_database, "Interagency Species Codes"))
+spp_codes <- as_tibble(sqlFetch(trawl_database, "1_Interagency Species Codes"))
 
 #close connection to DB
 odbcCloseAll()
+
+# Is Ontario data in the database yet?
+on_effort_raw %>%
+  filter(year == this_year)
+
 
 
 

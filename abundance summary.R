@@ -153,7 +153,7 @@ catch_summary %>%
                                                      year > 2001 ~ 5.0,
                                                      T ~ NA_real_),
                             agency == "ON" ~ 5.02),
-          state = case_when((agency == "ON" & longitude > -83.2900) ~ "ON", # not sure why, but we're setting far west sites to state = OH
+          state = case_when((agency == "ON" & longitude > -83.2900) ~ "ON", # setting Michigan sites to state = OH; see note from J. Tyson below
                             agency == "ON" ~ "OH",
                             T ~ "OH"),
           area_swept = effdist * wings,
@@ -162,6 +162,18 @@ catch_summary %>%
   group_by(year, crn, spp_agegroup, agency, state, area_swept, depth_strata) %>%
     summarize(fish_per_area = sum(fish_per_area)) %>%
   ungroup -> catch_summary_by_area
+
+# RE: state == MI sites (from above):
+# Email from Jeff Tyson, Aug 2019: 
+# In the original IA trawling program MI sites were included in the initial site selections. OMNR agreed to conduct trawling there to assess 
+#   those sites because of MDNR constraints.  If I recall, OMNR ran into operational constraints in 1995, so we agreed to pick up a couple of the sites 
+#   on our west run to try and at least partially cover off on these.  Given logistic challenges with the west run and adding two additional sites, 
+#   we had discussions with MDNR to see if they could start picking them up, but I’m not sure it ever came to fruition.  
+#   So, in a nutshell, these sites were a part of the IA trawl survey, OMNR picked them up from 88-94, and we picked up a subset 
+#   in 95 and then I don’t think MI, ON, or OH sampled them for a while (until recently I assume).  This was not a part of any trawl comparison work that I am aware of.
+#
+
+
 
 ### Create functional groupings (spiny-rayed, clupeid, soft-rayed, and total) in new tibble   ################
 catch_summary_by_area %>%
@@ -186,7 +198,7 @@ catch_summary_by_area %>%
 
 
 
-### Continue with relative abundance summary   #############################################
+### Continue with absolute abundance summary   #############################################
 
 # Average catch/m2 over year, agency, depth strata, and spp_agegroup
 catch_summary_by_area %>%
@@ -251,13 +263,3 @@ yearly_abundance_by_agency %>%
   spread(key = spp_agegroup, value = rel_abundance) -> yearly_abundance_by_state
 
 write_csv(yearly_abundance_by_state, here("data", "West Basin absolute abundance by agency.csv"))
-
-
-
-# old sites where state != agency. But why? 
-catch_summary_by_area %>% 
-  mutate(test = (agency == state)) %>% 
-  filter(test == FALSE) %>% 
-  select(crn) %>% unique %>% view
-
-
