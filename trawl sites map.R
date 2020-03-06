@@ -58,7 +58,7 @@ tm_shape(us_and_can, bbox = wb_bounds)+tm_fill()+ #plot land
   tm_add_legend(type = "symbol", labels = c("Low DO", "Normoxic"), col = c("firebrick1", "black"), alpha = 1)+
   tm_layout(legend.position = c(.05,.14), legend.frame = "black", legend.bg.color = "white", fontfamily = "Times")
 
-tmap_save(filename = paste(here("figures", "trawl sites map.png")), width = 6, height = 5, units = "in")
+tmap_save(filename = paste(here("figures", paste("trawl sites map ", this_year, ".png", sep = ""))), width = 6, height = 5, units = "in")
 
 
 #### Interactive map   #########################

@@ -101,14 +101,14 @@ draft_catch_summary %>%
 #join in effort stats
 catch_summary %>%
   left_join(all_effort %>% 
-              select(projcode, year, agency, crn, depth, effdur, effdist, effstat, totdist, longitude, latitude)) %>%
+              select(projcode, year, month, day, agency, crn, depth, effdur, effdist, effstat, totdist, longitude, latitude)) %>%
   arrange(year, crn, projcode) %>%
   filter(effstat == 1, year != 1987, !is.na(effdist)) -> catch_summary #added effdist filter - without distance, we can't calc volume sampled so NA's introduced
 
 
 ### OLD SAS NOTE - Calc Vol sampled and catch/meter^2 for each spp-age with Fishing Power Correction (FPC) applied   ##################################
 
-#this is going to be screwy - we're using nested case_when calls to find cases of Ohio trawl prior to 2002 and applying one
+#Use  nested case_when calls to find cases of Ohio trawl prior to 2002 and applying one
 # fishing correction to them, then finding Ohio trawls 2002-present and applying another. 
 catch_summary %>%
   mutate(depth_strata = case_when(depth > 6 ~ "deep", #called DEPT = 1 in old code
@@ -159,7 +159,7 @@ catch_summary %>%
           area_swept = effdist * wings,
           vol_swept = area_swept * gape,
           fish_per_area = sum_catch/area_swept) %>% #catch per m^2
-  group_by(year, crn, spp_agegroup, agency, state, area_swept, depth_strata) %>%
+  group_by(year, month, day, crn, spp_agegroup, agency, state, area_swept, depth_strata) %>%
     summarize(fish_per_area = sum(fish_per_area)) %>%
   ungroup -> catch_summary_by_area
 
@@ -177,7 +177,7 @@ catch_summary %>%
 
 ### Create functional groupings (spiny-rayed, clupeid, soft-rayed, and total) in new tibble   ################
 catch_summary_by_area %>%
-  group_by(year, crn, agency, state, area_swept, depth_strata) %>%
+  group_by(year, month, day, crn, agency, state, area_swept, depth_strata) %>%
   summarize(clupeid = sum(fish_per_area[spp_agegroup %in% c("alewife_all", "giz_shad_yoy")]),
             shiner = sum(fish_per_area[spp_agegroup %in% c("em_shiner_adult", "em_shiner_yoy", "spot_shiner_adult", "spot_shiner_yoy",
                                                            "notropis_yoy", "notropis_adult", "sand_shiner_yoy")]),
@@ -187,7 +187,7 @@ catch_summary_by_area %>%
             all_fish = clupeid + soft_ray + spiny_ray) %>%
   ungroup %>%
   gather(key = "spp_agegroup", value = "fish_per_area", c(clupeid, shiner, soft_ray, spiny_ray, all_fish)) %>%
-  select(year, crn, spp_agegroup, agency, state, area_swept, depth_strata, fish_per_area) -> fish_group_summary
+  select(year, month, day, crn, spp_agegroup, agency, state, area_swept, depth_strata, fish_per_area) -> fish_group_summary
 
 #merge into existing catch summary
 catch_summary_by_area %>%
@@ -233,7 +233,7 @@ yearly_abundance_by_agency %>%
   filter(forage_fish == TRUE) %>%        
   select(-total_abundance, -forage_fish) -> yearly_abundance_tall # use this for graphing
 
-write_csv(yearly_abundance_tall, here("data", "West Basin absolute abundance tall format.csv"))
+#write_csv(yearly_abundance_tall, here("data", "West Basin absolute abundance tall format.csv"))
 
 
 # spread data and print - similar to older FTG SAS output

@@ -7,7 +7,7 @@ draft_catch_summary %>%
     summarize(sum_catch = sum(sum_catch)) %>% # sum over crn/spp/age code - may not be necessary
   ungroup() %>%
   complete(nesting(projcode, year, agency, crn), nesting(species, agecode), fill = list(sum_catch = 0)) %>% # explicit zeros
-  left_join(all_effort %>% select(projcode, crn, effdur, effdist, effstat, depth, totdist, longitude, latitude)) %>% #join effort data
+  left_join(all_effort %>% select(projcode, crn, month, day, effdur, effdist, effstat, depth, totdist, longitude, latitude)) %>% #join effort data
   filter(effstat == 1, year != 1987, !is.na(effdist)) -> catch_summary_all_spp
 
 
@@ -60,22 +60,22 @@ catch_summary_all_spp %>%
          area_swept = effdist * wings,
          vol_swept = area_swept * gape,
          fish_per_area = sum_catch/area_swept) %>%
-  group_by(projcode, year, crn, species, agecode, agency, state, area_swept, depth_strata) %>%
+  group_by(projcode, year, month, day, crn, species, agecode, agency, state, area_swept, depth_strata) %>%
     summarize(fish_per_area = sum(fish_per_area)) %>%
   ungroup-> catch_summary_all_spp_by_area
 
 catch_summary_all_spp_by_area %<>%
-  select(projcode, year, agency, state, crn, species, agecode, "fish_per_m2" = fish_per_area, depth_strata, area_swept) %>%
+  select(projcode, year, month, day, agency, state, crn, species, agecode, "fish_per_m2" = fish_per_area, depth_strata, area_swept) %>%
   arrange(year, agency, crn)
 
 write_csv(catch_summary_all_spp_by_area %>% select(-depth_strata, -area_swept, -state), 
-          here("data", "data requests", "7_31_19 absolute abundance by crn_spp_agecode.csv"))
+          here("data", "data requests", "3_3_20 absolute abundance by crn_spp_agecode.csv"))
           
 ### Absolute abundance (per ha) basinwide for ALL species ##################################
 
 # Average catch/m2 over year, agency, depth strata, and spp_agegroup
 catch_summary_all_spp_by_area %>%
-  group_by(year, state, depth_strata, species, agecode) %>%
+  group_by(year, month, day, state, depth_strata, species, agecode) %>%
   summarize(mean_fish = mean(fish_per_m2),
             sd_fish = sd(fish_per_m2)) %>%
   ungroup-> yearly_abundance_by_agency_all_spp
@@ -91,6 +91,8 @@ yearly_abundance_by_agency_all_spp %>%
          abundance_per_ha = total_abundance/375320) -> yearly_abundance_all_spp # number per hectare
 
 
+
+# SUMMARY   
 # now create West Basin summary, calc abs abundance and fish/ha, then saves totals
 yearly_abundance_all_spp %>%
   group_by(year, species, agecode) %>%
@@ -98,5 +100,5 @@ yearly_abundance_all_spp %>%
             abundance_per_ha = total_abundance/375320) %>%
   ungroup -> yearly_abundance_all_spp
 
-write_csv(yearly_abundance_all_spp, here("data", "data requests", "7_31_19 absolute abundance by year_spp_agecode.csv"))
+write_csv(yearly_abundance_all_spp, here("data", "data requests", "3_3_20 SUMMARY absolute abundance by year_spp_agecode ALL SPP.csv"))
 

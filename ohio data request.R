@@ -90,8 +90,8 @@ ohio_only_effort_raw %<>%
   filter(effstat == 1, year != 1987)
   
   
-write_csv(ohio_only_effort_raw, path = here("data", "data requests", "Ohio WB trawl effort data request.csv"))
-write_csv(ohio_only_catch_raw, path = here("data", "data requests", "Ohio WB trawl catch data request.csv"))
+#write_csv(ohio_only_effort_raw, path = here("data", "data requests", "Ohio WB trawl effort RAW DATA.csv"))
+#write_csv(ohio_only_catch_raw, path = here("data", "data requests", "Ohio WB trawl catch RAW DATA.csv"))
 
 ### OSU Museum data    #############################################
 ohio_only_catch_raw %>%
@@ -133,7 +133,7 @@ ohio_only_catch_raw %>%
 
 ohio_only_catch %>%
   complete(nesting(projcode, year, agency, crn), nesting(species, agecode), fill = list(sum_catch = 0)) %>% # explicit zeros
-  left_join(ohio_only_effort %>% select(projcode, crn, effdur, effdist, effstat, depth, totdist, longitude, latitude)) %>% #join effort data
+  left_join(ohio_only_effort %>% select(projcode, crn, month, day, effdur, effdist, effstat, depth, totdist, longitude, latitude)) %>% #join effort data
   filter(effstat == 1, year != 1987, !is.na(effdist)) -> ohio_catch_summary
 
 
@@ -186,22 +186,21 @@ ohio_catch_summary %>%
          area_swept = effdist * wings,
          vol_swept = area_swept * gape,
          fish_per_area = sum_catch/area_swept) %>%
-  group_by(projcode, year, crn, species, agecode, agency, state, area_swept, depth_strata) %>%
+  group_by(projcode, year, month, day, crn, species, agecode, agency, state, area_swept, depth_strata) %>%
   summarize(fish_per_area = sum(fish_per_area)) %>%
   ungroup-> ohio_catch_summary_by_area
 
 ohio_catch_summary_by_area %<>%
-  select(projcode, year, agency, state, crn, species, agecode, "fish_per_m2" = fish_per_area) %>%
+  select(projcode, year, month, day, agency, state, crn, species, agecode, "fish_per_m2" = fish_per_area) %>%
   arrange(year, agency, crn)
 
-# join effort data back so we can get locations and filter out just fall trawl
+# join effort data back so we can get locations
 ohio_catch_summary_by_area %>%
   left_join(spp_codes, by = c(species = "code")) %>%
-  left_join(ohio_only_effort %>% select(projcode, crn, month, depth, longitude, latitude)) %>% #join effort data
-  filter(month %in% c(9,10)) -> ohio_only_abs_abundance
+  left_join(ohio_only_effort %>% select(projcode, crn, month, depth, stemp, btemp, secchi, botoxy, longitude, latitude))-> ohio_only_abs_abundance
 
 write_csv(ohio_only_abs_abundance,  
-          here("data", "data requests", "8_13_19 absolute abundance by crn_spp_agecode ohio_fall_trawl.csv"))
+          here("data", "data requests", "3_3_20 rel abundance by crn_spp_agecode ohio.csv"))
 
 
 
