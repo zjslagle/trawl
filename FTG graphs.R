@@ -16,9 +16,9 @@ yearly_abundance_tall %>%
     scale_x_continuous(expand = c(0,0), breaks = seq(1988,this_year,by=5))+
     scale_y_continuous(expand = c(0,0))+
     labs(x="", y="Fish/ha")+
-    scale_fill_manual(name = "", values = cols, labels = c("Clupeid", "Soft-rayed", "Spiny-rayed"))
+    scale_fill_manual(name = "", values = cols, labels = c("Clupeid", "Soft-rayed", "Spiny-rayed"))-> density_by_group
 
-ggsave(here("figures", "fig 2_4_2 rel abundance by group.png"), width = 7, height = 5, units = "in",dpi = 600)
+ggsave(plot = density_by_group, here("figures", "fig 2_4_2 rel abundance by group.png"), width = 7, height = 5, units = "in",dpi = 600)
 
 # no biomass graph, haven't converted that SAS code yet - ZJS 2/19/2020
 

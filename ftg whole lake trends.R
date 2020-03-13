@@ -272,9 +272,9 @@ forage_ranked %>%
         legend.text = element_text(size = 14, face = "bold"), legend.title = element_text(size = 14, face = "bold"), legend.key = element_blank(),
         strip.background = element_rect(fill = "white", color = "black"), strip.text = element_text(face = "bold", size = 12),
         rect = element_rect(fill = "transparent"), legend.position = "top", plot.title = element_text(color = "grey70", size = 10),
-        panel.spacing.y = unit(5, "mm"))-> shiner_YOY_percent
+        panel.spacing.y = unit(5, "mm"))-> shiner_yoy_percent
 
-ggsave(plot = shiner_YOY_percent, here("figures", "whole lake","percentile - shiner YOY.png"), width = 10, height = 6.5, units = "in",dpi = 600)
+ggsave(plot = shiner_yoy_percent, here("figures", "whole lake","percentile - shiner YOY.png"), width = 10, height = 6.5, units = "in",dpi = 600)
 
 # shiner adult
 forage_ranked %>%
@@ -316,9 +316,9 @@ forage_ranked %>%
         legend.text = element_text(size = 14, face = "bold"), legend.title = element_text(size = 14, face = "bold"), legend.key = element_blank(),
         strip.background = element_rect(fill = "white", color = "black"), strip.text = element_text(face = "bold", size = 12),
         rect = element_rect(fill = "transparent"), legend.position = "top", plot.title = element_text(color = "grey70", size = 10),
-        panel.spacing.y = unit(5, "mm"))-> shad_YOY_percent
+        panel.spacing.y = unit(5, "mm"))-> shad_yoy_percent
 
-ggsave(plot = shad_YOY_percent, here("figures", "whole lake","percentile - shad YOY.png"), width = 10, height = 6.5, units = "in",dpi = 600)
+ggsave(plot = shad_yoy_percent, here("figures", "whole lake","percentile - shad YOY.png"), width = 10, height = 6.5, units = "in",dpi = 600)
 
 # Goby all
 forage_ranked %>%
@@ -342,4 +342,53 @@ forage_ranked %>%
 
 ggsave(plot = goby_percent, here("figures", "whole lake","percentile - goby.png"), width = 10, height = 6.5, units = "in",dpi = 600)
 
+
+
+
+### Powerpoint graphs (for dark background)   #######################
+
+library(export); library(ggpubr)
+source("FTG graphs.R") # for density_by_group graph
+
+
+# theme with inverse colors
+inverse_theme <- function(){theme_transparent()+
+    theme(legend.position = "top",
+          axis.title = element_text(size=25), 
+          axis.text.y=element_text(size=18, vjust=-.1), 
+          axis.text.x=element_text(size=18, vjust=.1), 
+          axis.line = element_line(color = "white"),
+          axis.ticks = element_line(color = "white"),
+          panel.background = element_blank(),
+          panel.border = element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          plot.background = element_blank(),
+          legend.text = element_text(size = 18),
+          legend.title = element_text(size = 18),
+          strip.background = element_blank(),
+          strip.text = element_text(size = 18, color = "white"),
+          text = element_text(color = "white"),
+          axis.text = element_text(color = "white"))}
+
+# add each graph to PPT file - first graph overwrites, remainder append
+graph2ppt(x = density_by_group + inverse_theme(), width = 10, height = 6.5, file = here("figures", "whole lake", "LEC figs.pptx"), append = FALSE)
+graph2ppt(x = smelt_yoy + inverse_theme(), width = 10, height = 6.5, file = here("figures", "whole lake", "LEC figs.pptx"), append = TRUE)
+graph2ppt(x = smelt_adult + inverse_theme(), width = 10, height = 6.5, file = here("figures", "whole lake", "LEC figs.pptx"), append = TRUE)
+graph2ppt(x = shiner_yoy + inverse_theme(), width = 10, height = 6.5, file = here("figures", "whole lake", "LEC figs.pptx"), append = TRUE)
+graph2ppt(x = shiner_adult + inverse_theme(), width = 10, height = 6.5, file = here("figures", "whole lake", "LEC figs.pptx"), append = TRUE)
+graph2ppt(x = shad_yoy + inverse_theme(), width = 10, height = 6.5, file = here("figures", "whole lake", "LEC figs.pptx"), append = TRUE)
+graph2ppt(x = goby_all + inverse_theme(), width = 10, height = 6.5, file = here("figures", "whole lake", "LEC figs.pptx"), append = TRUE)
+graph2ppt(x = smelt_yoy_percent + inverse_theme() + geom_hline(aes(yintercept = 0), col = "white"), 
+          width = 10, height = 6.5, file = here("figures", "whole lake", "LEC figs.pptx"), append = TRUE)
+graph2ppt(x = smelt_adult_percent + inverse_theme() + geom_hline(aes(yintercept = 0), col = "white"), 
+          width = 10, height = 6.5, file = here("figures", "whole lake", "LEC figs.pptx"), append = TRUE)
+graph2ppt(x = shiner_yoy_percent + inverse_theme() + geom_hline(aes(yintercept = 0), col = "white"), 
+          width = 10, height = 6.5, file = here("figures", "whole lake", "LEC figs.pptx"), append = TRUE)
+graph2ppt(x = shiner_adult_percent + inverse_theme() + geom_hline(aes(yintercept = 0), col = "white"), 
+          width = 10, height = 6.5, file = here("figures", "whole lake", "LEC figs.pptx"), append = TRUE)
+graph2ppt(x = shad_yoy_percent + inverse_theme() + geom_hline(aes(yintercept = 0), col = "white"), 
+          width = 10, height = 6.5, file = here("figures", "whole lake", "LEC figs.pptx"), append = TRUE)
+graph2ppt(x = goby_percent + inverse_theme() + geom_hline(aes(yintercept = 0), col = "white"), 
+          width = 10, height = 6.5, file = here("figures", "whole lake", "LEC figs.pptx"), append = TRUE)
 
