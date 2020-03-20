@@ -27,6 +27,6 @@ mean_lengths %>%
     scale_color_brewer(palette = "Paired", name = "")+
     scale_linetype_discrete(name = "")+scale_shape_discrete(name = "")
 
-ggsave(here("figures", "Fig 4_3_3 mean lengths.png"), width = 7, height = 5, units = "in",dpi = 600)
+ggsave(here("figures", "Fig 4_3_3 mean lengths.png"), width = 6, height = 4, units = "in",dpi = 600)
 
 
