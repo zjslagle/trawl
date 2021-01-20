@@ -8,13 +8,12 @@
 
 ### Load libraries   ##################################
 library(magrittr)
-#library(sqldf)
 library(forcats)
 require(RODBC)
 require(lubridate)
 require(stringr)
 require(here)
-require(xlsx)
+#require(xlsx)
 require(readxl)
 library(tidyverse)
 
@@ -24,8 +23,10 @@ windowsFonts(Times=windowsFont("Times New Roman"))
 
 ### Connect to Trawl MSAccess database, download required data  ############################
 #open connection to trawl database
-trawl_database <- odbcConnectAccess2007("//s.dnr.isi.oitfs.ohio.gov/DNRShares/Sandusky Fisheries Research/DuFour/1_Projects/1_Trawling/3_Database/Interagency Trawl XP.mdb")
+#trawl_database <- odbcConnectAccess2007("//s.dnr.isi.oitfs.ohio.gov/DNRShares/Sandusky Fisheries Research/DuFour/1_Projects/1_Trawling/3_Database/Interagency Trawl XP.mdb")
 
+# work from home:
+trawl_database <- odbcConnectAccess2007(here("data", "Interagency Trawl XP.mdb"))
 
 #list tables in trawl database
 sqlTables(trawl_database)
@@ -46,9 +47,6 @@ odbcCloseAll()
 # Is Ontario data in the database yet?
 on_effort_raw %>%
   filter(year == this_year)
-
-
-
 
 ### Reformat and join OH and ON Trawl datasets    ##############################
 

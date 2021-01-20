@@ -7,6 +7,7 @@ cols = c("clupeid" = "red", "spiny_ray" = "yellow", "soft_ray" = "deepskyblue")
 
 yearly_abundance_tall %>%
   filter(spp_agegroup %in% c("clupeid", "spiny_ray", "soft_ray")) %>%
+  filter(year < 2016) %>% 
   ggplot(aes(x = year, y = abundance_per_ha, group = spp_agegroup, fill = spp_agegroup))+
     geom_area(position = "stack", color = "black")+
     theme(axis.title = element_text(size=14, face = "bold"), axis.text.y=element_text(size=14, color = "black"), 
@@ -18,7 +19,8 @@ yearly_abundance_tall %>%
     labs(x="", y="Fish/ha")+
     scale_fill_manual(name = "", values = cols, labels = c("Clupeid", "Soft-rayed", "Spiny-rayed"))-> density_by_group
 
-ggsave(plot = density_by_group, here("figures", "fig 2_4_2 rel abundance by group.png"), width = 7, height = 5, units = "in",dpi = 600)
+ggsave(plot = density_by_group, here("figures", "fig 14 West Basin Density by group.pdf"), 
+       width = 7, height = 5, units = "in",dpi = 600)
 
 # no biomass graph, haven't converted that SAS code yet - ZJS 2/19/2020
 
@@ -101,6 +103,21 @@ yearly_abundance_tall %>%
 ggsave(here("figures", "rel abundance goby and and troutperch.png"), width = 7, height = 5, units = "in",dpi = 600)
 
 
+# Same graph for any species
+target_spp = "s_chub_adult"
+
+yearly_abundance_tall %>%
+  filter(spp_agegroup == target_spp) %>%
+  ggplot(aes(x = year, y = abundance_per_ha))+
+  geom_area(position = "stack", color = "black")+
+  theme(axis.title = element_text(size=14, face = "bold"), axis.text.y=element_text(size=14, color = "black"), 
+        axis.text.x=element_text(size=14, vjust=1, color = "black"), axis.line = element_line(color = "black"), 
+        panel.background = element_blank(), text = element_text(family = "Times"), legend.position = "top",
+        strip.background = element_rect(fill = "white", color = "black"), strip.text = element_text(face = "bold", size = 12)) +
+  scale_x_continuous(expand = c(0,.5), breaks = seq(1988,this_year,by=5))+
+  scale_y_continuous(expand = c(0,0))+
+  labs(x = "", y = "Fish/ha", title = target_spp)
+
 ### New graph - % change for species this year vs last 10 years  ###########
 
 # first, calc percent difference between this years abundance and last 10 years
@@ -111,8 +128,8 @@ abund_percent_diff <- yearly_abundance_tall %>%
         summarize(ten_year_mean = mean(abundance_per_ha[which(year %in% seq(this_year-11,this_year-1))]),
                   this_year_abundance = abundance_per_ha[which(year == this_year)],
                   percent_diff = (((this_year_abundance+.0000001)-ten_year_mean)/ten_year_mean)*100) %>% #percentage change from 10 yr mean
-        ungroup() #write.csv(here("data", "percent change.csv")) 
-        #filter(rank(percent_diff) %in% c(1:5, seq(n(),n()-4))) %>% # get top and bottom five (biggest changes) - turn OFF for All Species
+        ungroup()  #%>% #write.csv("data/percent change.csv")
+        #filter(rank(percent_diff) %in% c(1:5, seq(n(),n()-4))) # get top and bottom five (biggest changes) - turn OFF for All Species
   
 # now plot it
 abund_percent_diff %>%
@@ -121,8 +138,9 @@ abund_percent_diff %>%
     theme_minimal()+
     labs(y = paste("% difference: ", this_year, "- 10 yr mean"))+
     scale_fill_distiller(type = "div", palette = "RdBu", direction = 1)+
-    scale_y_continuous(limits = c(-100, max(abund_percent_diff$percent_diff)), breaks = c(-100, 0, 200, 400, 600, 800), 
-                       labels = c("-100%", "0", "+200%", "+400%", "+600%", "+800%"))+
+    scale_y_continuous(limits = c(-100, max(abund_percent_diff$percent_diff)), 
+                       breaks = c(-100, 0, 200, 400, 600, 800, 1000, 1200, 1400), 
+                       labels = c("-100%", "0", "+200%", "+400%", "+600%", "+800%", "+1000%", "+1200%", "+1400%"))+
     theme(axis.title = element_text(size=14, face = "bold"), axis.text.y=element_text(size=14, color = "black"), 
           axis.text.x=element_text(size=14, vjust=1, hjust = 1, color = "black", angle = 45), axis.line = element_line(color = "black"),
           axis.title.x = element_blank(), panel.grid.minor = element_blank(),
@@ -130,3 +148,19 @@ abund_percent_diff %>%
           strip.background = element_rect(fill = "white", color = "black"))
 
 ggsave(here("figures", "percent difference - all species.png"), width = 7, height = 5, units = "in",dpi = 600)
+
+
+# Log scale (only for increases, log(negative number) is undefined)
+abund_percent_diff %>%
+  filter(percent_diff > 0) %>%
+  ggplot(aes(x = reorder(spp_agegroup, percent_diff), y = percent_diff, fill = percent_diff))+
+  geom_col(col = "black")+
+  theme_minimal()+
+  labs(y = paste("% difference: ", this_year, "- 10 yr mean"))+
+  scale_fill_distiller(type = "seq", palette = "Blues", direction = 1)+
+  scale_y_log10()+
+  theme(axis.title = element_text(size=14, face = "bold"), axis.text.y=element_text(size=14, color = "black"), 
+        axis.text.x=element_text(size=14, vjust=1, hjust = 1, color = "black", angle = 45), axis.line = element_line(color = "black"),
+        axis.title.x = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), text = element_text(family = "Times"),
+        strip.background = element_rect(fill = "white", color = "black"))

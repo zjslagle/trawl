@@ -1,17 +1,17 @@
-source("Read Trawl Data.R")
+source("read data - 2020 format.R")
 
 ### Abundance summary    ##################################
 # this R code is an attempt to replicate existing SAS code (written by Jeff Tyson?) that takes OH and ON trawl data
 #   and calculates fish species per m^3. 
 
-# sum over CRN (only summarizes ~10 rows)
-all_catch %>%
-  group_by(projcode, year, agency, crn, species, agecode) %>% 
-  summarize(sum_catch = sum(catch)) %>% ungroup() %>%
-  left_join(all_effort %>% 
-              select(projcode, year, agency, crn, depth, effdur, effdist, effstat, totdist, longitude, latitude)) %>%
-  arrange(year, crn, projcode) %>%
-  filter(effstat == 1, year != 1987, !is.na(effdist))-> draft_catch_summary
+# sum over CRN (only summarizes ~10 rows), join effort, filter (not sure if last step is necc)
+draft_catch_summary <- all_catch %>%
+      group_by(projcode, year, agency, yrsam, crn, species, agecode) %>% 
+      summarize(sum_catch = sum(catch)) %>% ungroup() %>%
+      left_join(all_effort %>% 
+                  select(projcode, year, agency, yrsam, crn, depth, effdur, effdist, effstat, totdist, longitude, latitude)) %>%
+      arrange(year, crn, projcode) %>%
+      filter(effstat == 1, year != 1987, !is.na(effdist))
 
 #spp_codes %>% filter(code == 177) #look up species
 #spp_codes %>% filter(grepl("redhorse",common_name)) #look up species groups (case sensitive)
@@ -91,26 +91,26 @@ draft_catch_summary %>%
   filter(spp_agegroup == "dont_care") 
 
 #filter only spp-age groups that we care about, sum, then fill in zeros for zero catches
-draft_catch_summary %>%
+catch_summary <- draft_catch_summary %>%
   filter(spp_agegroup != "dont_care") %>%
-  group_by(projcode, year, agency, crn, spp_agegroup) %>%
+  group_by(projcode, year, agency, yrsam, spp_agegroup) %>%
   summarize(sum_catch = sum(sum_catch)) %>%
   ungroup() %>%
-  complete(nesting(projcode, year, agency, crn), spp_agegroup, fill = list(sum_catch = 0))-> catch_summary
+  complete(nesting(projcode, year, agency, yrsam), spp_agegroup, fill = list(sum_catch = 0))
 
 #join in effort stats
-catch_summary %>%
+catch_summary <- catch_summary %>%
   left_join(all_effort %>% 
-              select(projcode, year, month, day, agency, crn, depth, effdur, effdist, effstat, totdist, longitude, latitude)) %>%
+              select(projcode, year, month, day, agency, yrsam, crn, depth, effdur, effdist, effstat, totdist, longitude, latitude)) %>%
   arrange(year, crn, projcode) %>%
-  filter(effstat == 1, year != 1987, !is.na(effdist)) -> catch_summary #added effdist filter - without distance, we can't calc volume sampled so NA's introduced
+  filter(effstat == 1, year != 1987, !is.na(effdist)) #added effdist filter - without distance, we can't calc volume sampled so NA's introduced
 
 
 ### OLD SAS NOTE - Calc Vol sampled and catch/meter^2 for each spp-age with Fishing Power Correction (FPC) applied   ##################################
 
 #Use  nested case_when calls to find cases of Ohio trawl prior to 2002 and applying one
 # fishing correction to them, then finding Ohio trawls 2002-present and applying another. 
-catch_summary %>%
+catch_summary_by_area <- catch_summary %>%
   mutate(depth_strata = case_when(depth > 6 ~ "deep", #called DEPT = 1 in old code
                                   T ~ "shallow"),
          effdist = effdist * 1852,
@@ -159,9 +159,9 @@ catch_summary %>%
           area_swept = effdist * wings,
           vol_swept = area_swept * gape,
           fish_per_area = sum_catch/area_swept) %>% #catch per m^2
-  group_by(year, month, day, crn, spp_agegroup, agency, state, area_swept, depth_strata) %>%
+  group_by(year, month, day, crn, yrsam, spp_agegroup, agency, state, area_swept, depth_strata) %>%
     summarize(fish_per_area = sum(fish_per_area)) %>%
-  ungroup -> catch_summary_by_area
+  ungroup
 
 # RE: state == MI sites (from above):
 # Email from Jeff Tyson, Aug 2019: 
@@ -176,8 +176,8 @@ catch_summary %>%
 
 
 ### Create functional groupings (spiny-rayed, clupeid, soft-rayed, and total) in new tibble   ################
-catch_summary_by_area %>%
-  group_by(year, month, day, crn, agency, state, area_swept, depth_strata) %>%
+fish_group_summary <- catch_summary_by_area %>%
+  group_by(year, month, day, crn, yrsam, agency, state, area_swept, depth_strata) %>%
   summarize(clupeid = sum(fish_per_area[spp_agegroup %in% c("alewife_all", "giz_shad_yoy")]),
             shiner = sum(fish_per_area[spp_agegroup %in% c("em_shiner_adult", "em_shiner_yoy", "spot_shiner_adult", "spot_shiner_yoy",
                                                            "notropis_yoy", "notropis_adult", "sand_shiner_yoy")]),
@@ -187,39 +187,35 @@ catch_summary_by_area %>%
             all_fish = clupeid + soft_ray + spiny_ray) %>%
   ungroup %>%
   gather(key = "spp_agegroup", value = "fish_per_area", c(clupeid, shiner, soft_ray, spiny_ray, all_fish)) %>%
-  select(year, month, day, crn, spp_agegroup, agency, state, area_swept, depth_strata, fish_per_area) -> fish_group_summary
+  select(year, month, day, crn, yrsam, spp_agegroup, agency, state, area_swept, depth_strata, fish_per_area)
 
 #merge into existing catch summary
 catch_summary_by_area %>%
   bind_rows(fish_group_summary) %>%
-  arrange(crn) -> catch_summary_by_area
-
-###  Create spatial abundance of fish groups by site, for map making  #################
-
-
+  arrange(yrsam) -> catch_summary_by_area
 
 ### Continue with absolute abundance summary   #############################################
 
 # Average catch/m2 over year, agency, depth strata, and spp_agegroup
-catch_summary_by_area %>%
+yearly_abundance_by_agency <- catch_summary_by_area %>%
   group_by(year, state, depth_strata, spp_agegroup) %>%
   summarize(mean_fish = mean(fish_per_area),
             sd_fish = sd(fish_per_area)) %>%
-  ungroup-> yearly_abundance_by_agency
+  ungroup
 
 # Expand catch/m2 to absolute abundance by agency based on estimated area across each depth strata;
 #   Estimates of area by depth strata are from Arcview exercise; SAS code claims "Summary attached" but it's not
 #     Then, calc fish/ha
-yearly_abundance_by_agency %>%
+yearly_abundance_by_agency <- yearly_abundance_by_agency %>%
   mutate(total_abundance = case_when(state == "ON" ~ case_when(depth_strata == "shallow" ~ mean_fish * 1.681E+8,
                                                            depth_strata == "deep" ~ mean_fish * 1.244E+9),
                                  state == "OH" ~ case_when(depth_strata == "shallow" ~ mean_fish * 9.281E+8,
                                                            depth_strata == "deep" ~ mean_fish * 1.413E+9)),
-         abundance_per_ha = total_abundance/375320) -> yearly_abundance_by_agency # number per hectare
+         abundance_per_ha = total_abundance/375320) # number per hectare
 
 
-# now create West Basin summary, calc abs abundance and fish/ha, then saves totals
-yearly_abundance_by_agency %>%
+# now create West Basin summary, calc abs abundance and fish/ha, then saves totals; use this for graphing
+yearly_abundance_tall <- yearly_abundance_by_agency %>%
   group_by(year, spp_agegroup) %>%
   summarize(total_abundance = sum(total_abundance),
             abundance_per_ha = total_abundance/375320) %>%
@@ -231,23 +227,23 @@ yearly_abundance_by_agency %>%
                                                      "clupeid", "soft_ray", "spiny_ray", "all_fish") ~ TRUE,
                                  T ~ FALSE)) %>%
   filter(forage_fish == TRUE) %>%        
-  select(-total_abundance, -forage_fish) -> yearly_abundance_tall # use this for graphing
+  select(-total_abundance, -forage_fish)
 
-#write_csv(yearly_abundance_tall, here("data", "West Basin absolute abundance tall format.csv"))
+write_csv(yearly_abundance_tall, here("data", "West Basin absolute abundance tall format.csv"))
 
 
 # spread data and print - similar to older FTG SAS output
-yearly_abundance_tall %>%
+yearly_abundance_total <- yearly_abundance_tall %>%
   spread(key = spp_agegroup, value = abundance_per_ha) %>%
   select(year, drum_yoy, em_shiner_adult, em_shiner_yoy, goby_adult, notropis_adult, notropis_yoy, s_chub_adult, s_chub_yoy, sand_shiner_yoy,
          smelt_adult, smelt_yoy, spot_shiner_adult, spot_shiner_yoy, troutperch_adult, troutperch_yoy, w_bass_yoy,
-         w_perch_yoy, walleye_yoy, y_perch_yoy, clupeid, soft_ray, spiny_ray, all_fish)-> yearly_abundance_total
+         w_perch_yoy, walleye_yoy, y_perch_yoy, clupeid, soft_ray, spiny_ray, all_fish)
 
 write_csv(yearly_abundance_total, here("data", "West Basin absolute abundance.csv"))
 
 
 # write CSV with same but split by state
-yearly_abundance_by_agency %>%
+yearly_abundance_by_state <- yearly_abundance_by_agency %>%
   group_by(year, state, spp_agegroup) %>%
   summarize(total_abundance = sum(total_abundance),
             rel_abundance = total_abundance/375320) %>%
@@ -260,6 +256,6 @@ yearly_abundance_by_agency %>%
                                  T ~ FALSE)) %>%
   filter(forage_fish == TRUE) %>%        
   select(-total_abundance) %>% #remove this and next line for tall data
-  spread(key = spp_agegroup, value = rel_abundance) -> yearly_abundance_by_state
+  spread(key = spp_agegroup, value = rel_abundance)
 
 write_csv(yearly_abundance_by_state, here("data", "West Basin absolute abundance by agency.csv"))

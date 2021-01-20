@@ -1,5 +1,10 @@
-source("Read Trawl Data.R")
 source("abundance summary.R")
+
+### Calculate density (abundance per m2)    ###########################
+# Must apply Fishing Power Corrections to correct Explorer trawls to interagency standard.
+# See Tyson, J. T., Johnson, T. B., Knight, C. T., & Bur, M. T. (2006). 
+#       Intercalibration of Research Survey Vessels on Lake Erie. 
+#       North American Journal of Fisheries Management, 26(3), 559–570. https://doi.org/10.1577/m05-027.1
 
 
 draft_catch_summary %>%
@@ -71,6 +76,13 @@ catch_summary_all_spp_by_area %<>%
 write_csv(catch_summary_all_spp_by_area %>% select(-depth_strata, -area_swept, -state), 
           here("data", "data requests", "3_3_20 absolute abundance by crn_spp_agecode.csv"))
           
+# similar CSV but for making maps
+catch_summary_all_spp_by_area %>% 
+  left_join(spp_codes, by = c("species" = "code")) %>%
+  select(-projcode, -depth_strata, -area_swept, -state, -latin_name) %>% 
+  left_join(all_effort %>% select(crn, latitude, longitude)) %>%
+  write_csv(here("data", "density by crn.csv"))
+
 ### Absolute abundance (per ha) basinwide for ALL species ##################################
 
 # Average catch/m2 over year, agency, depth strata, and spp_agegroup

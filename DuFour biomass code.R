@@ -12,16 +12,17 @@
 
 ## load packages
 library(RODBC)   
-library(tidyverse)
+
 library(magrittr)
 library(utf8)
-library(plyr)
-
+#library(plyr)
+require(here)
+library(tidyverse)
 
 ## set working directory
-library(rstudioapi)
-setwd(dirname(rstudioapi::getActiveDocumentContext()))
-getwd()
+#library(rstudioapi)
+#setwd(dirname(rstudioapi::getActiveDocumentContext()))
+#getwd()
 
 
 
@@ -29,14 +30,18 @@ getwd()
 ## Bring in Effort, Catch, and Length data
 ##########################################
 ## bring in data
-chan1 <-  odbcConnectAccess2007("C:/Users/dufour/Documents/1_Projects/1_Trawling/3_Database/Trawling Database")   #specifies the file path
+#chan1 <-  odbcConnectAccess2007("C:/Users/dufour/Documents/1_Projects/1_Trawling/3_Database/Trawling Database")   #specifies the file path
+chan1 <-  odbcConnectAccess2007("data/Trawling Database")   #specifies the file path
+
 Effort <- sqlFetch(chan1, "Trawl Effort") 
 Catch  <- sqlFetch(chan1, "Trawl Catch") 
 odbcCloseAll()
 
 table(Effort$Year,Effort$T_MON)
 
-chan2 <-  odbcConnectAccess2007("C:/Users/dufour/Documents/1_Projects/1_Trawling/3_Database/Trawl lengths xp")   #specifies the file path
+#chan2 <-  odbcConnectAccess2007("C:/Users/dufour/Documents/1_Projects/1_Trawling/3_Database/Trawl lengths xp")   #specifies the file path
+chan2 <-  odbcConnectAccess2007("data/Trawl lengths xp")   #specifies the file path
+
 Lengths1 <- sqlFetch(chan2, "TRAWL LENGTHS 1985-89") 
 Lengths2 <- sqlFetch(chan2, "TRAWL LENGTHS 1990-94") 
 Lengths3 <- sqlFetch(chan2, "TRAWL LENGTHS 1995-99") 
@@ -142,7 +147,7 @@ dim(Length)
 ## Length_sum - summarize length data (mean, sd, n) by year, crn, spec, age
 mLength   <- aggregate(LENGTH~YEAR+T_MON+CRN+SPECIES+AGE,data=Length, mean)  ## calculate mean
 sdLength  <- aggregate(LENGTH~YEAR+T_MON+CRN+SPECIES+AGE,data=Length, sd)     ## calculate sd
-nLength  <- count(Length, c("YEAR","T_MON","CRN","SPECIES","AGE"))        ## generate counts
+nLength  <- plyr::count(Length, c("YEAR","T_MON","CRN","SPECIES","AGE"))        ## generate counts
 msdLength <- merge(mLength,sdLength,by=c("YEAR","T_MON","CRN","SPECIES","AGE"),all=T) ## bring mean and sd together
 Length_sum   <- merge(msdLength,nLength,by=c("YEAR","T_MON","CRN","SPECIES","AGE"),all=T) ## add counts 
 colnames(Length_sum) <- c("YEAR","T_MON","CRN","SPECIES","AGE","M","S","N") ## renames columns
@@ -160,6 +165,9 @@ head(Length_sum)
 
 Catch_len <- merge(Catch,Length_sum,by=c("YEAR","T_MON","CRN","SPECIES","AGE"),all=T) ## merge two datasets
 Catch_len$CATCH <- ifelse(Catch_len$CATCH < Catch_len$N,Catch_len$N,Catch_len$CATCH) ## adjust catch data to match length counts
+# N is probably number of lengths
+
+
 Catch_len <- Catch_len[complete.cases(Catch_len$N),]  ## pitch rows with NA length counts
 Catch_len$NUM <- Catch_len$CATCH-Catch_len$N ## calculate difference in CAtch and length counts (for simulating lengths below)
 
@@ -198,7 +206,9 @@ dim(Length2)
 ###########################################################
 ## Bring in L-W regression estimates and merge with Length2 (mm-g) #should this be Ohio Specific or updated?
 ###########################################################
-LWreg <- read.csv("C:/Users/dufour/Documents/1_Projects/1_Trawling/4_Abundance Indices/1_SAS_programs/2_Inter-agency/FTG/forlenwt.csv",sep=",",header=T)  ## bring in data
+#LWreg <- read.csv("C:/Users/dufour/Documents/1_Projects/1_Trawling/4_Abundance Indices/1_SAS_programs/2_Inter-agency/FTG/forlenwt.csv",sep=",",header=T)  ## bring in data
+LWreg <- readxl::read_excel(("data/forlenwt.xls")) 
+
 colnames(LWreg) <- c("SPECIES","INT","SLOPE","AGE") ## rename columns
 
 ## merge data
@@ -294,7 +304,6 @@ colnames(NewCatch_m) <- c("YEAR","T_MON","CRN","ALEWIFG", "GSHADG", "WHITFISG", 
 ## VOLUME SAMPLED AND BIOMASS PER AREA (g/m2) FOR EACH SPECIES-AGE FIELD
 ###################################################################
 head(NewCatch_m)
-head(Combo2)
 
 Combo2 <- merge(NewCatch_m,Effort,by=c("YEAR","T_MON","CRN"),all=T)  ## merge two datasets
 Combo2$DEPTH <- ifelse(Combo2$DEPTH <= 6,1,2)  ## classify depths as 1 (<=6m) and 2 (>6m)
@@ -325,7 +334,7 @@ Combo2$GAPE  <- ifelse(Combo2$YEAR < 2002, 1.5, 2.4)
 Combo2$WINGS <- ifelse(Combo2$YEAR < 2002, 4.83, 5.00)
 
 ## Area swept and volume sampled - these aren't even used?
-Combo2$EFFDIST <- Combo2$EFFDIST*1852
+Combo2$EFFDIST <- Combo2$EFFDIST*1852 #convert nmi to m (?)
 Combo2$TOTDIST <- Combo2$TOTDIST*1852
 Combo2$DEPLDIST <- Combo2$TOTDIST-Combo2$EFFDIST
 Combo2$HYPOT <- (Combo2$DEPTH^2)+((Combo2$DEPLDIST/2)^2)
@@ -357,7 +366,7 @@ Combo2 <- arrange(Combo2,YEAR,T_MON,DEPTH) ## sort by...
 head(Combo2)
 dim(Combo2)
 
-Combo2_exp <- cbind(Combo2[,1:3],Combo2[,4:38]*10000)
+Combo2_exp <- cbind(Combo2[,1:3],Combo2[,4:38]*10000) # convert to g/ha (?) 
 write.csv(Combo2_exp, "Ohio_WBtrawl_CRNdensity_1992_2018.csv")
 
 

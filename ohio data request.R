@@ -1,6 +1,6 @@
-source("Read Trawl Data.R")
+source("ohio read data.R")
 
-
+### Read Ohio Data ######################################
 # NOT THE SAME AS THE INTERAGENCY DB - Ohio has all months, vs Aug-only in Interagency
 ohio_trawl_database <- odbcConnectAccess2007("//s.dnr.isi.oitfs.ohio.gov/DNRShares/Sandusky Fisheries Research/DuFour/1_Projects/1_Trawling/3_Database/Trawling Database.mdb")
 
@@ -70,6 +70,7 @@ all_catch %>%
 
 
 all_catch %>%
+  #filter(year > 1999) %>%
   left_join(spp_codes, by = c(species = "code")) %>%
   group_by(species, common_name, latin_name) %>%
   summarize(catch = sum(catch)) %>%
@@ -77,6 +78,12 @@ all_catch %>%
   mutate(percent_catch = round((catch/total_catch$total) * 100,3)) %>%
   arrange(latin_name) %>%
   write_csv(here("data", "WB trawl spp list.csv"))
+
+# use this to look at suspicious catches, e.g. Finescale Dace (species code == 183)
+all_catch %>%
+  #filter(year > 1999) %>%
+  left_join(spp_codes, by = c(species = "code")) %>%
+  filter(species == 183)
 
 
 ### All Ohio trawl data to Excel   ############################################
@@ -217,3 +224,26 @@ ohio_only_catch_raw %>%
 ohio_only_effort_raw %>%
   filter(year == 2018, siteno %in% c(29,33)) %>%
   select(siteno, latitude, longitude) %>% view
+
+### E Shiner graph for 1-pg flyer     #######################
+windowsFonts(Calibri=windowsFont("Calibri"))
+
+# read in Table 3.1.4 from status - Age-1+ abundance in MU1, Aug trawl
+abundance <- read_excel(here("data", "trawl aug ac_3 data.xlsx"))
+
+abundance %<>% janitor::clean_names()
+
+abundance %>%
+  ggplot(aes(x = year, y = emerald_shiner))+
+    geom_line(size = 2, color = "#008d40")+ # color is same as DOW logo
+    labs(y = "Shiner abundance index")+
+    scale_x_continuous(expand = c(0,0), breaks = seq(1988,2019,by=10))+
+    scale_y_continuous(expand = c(0,0))+
+    theme(axis.title = element_text(size=14), axis.text.y=element_text(size=14, color = "black"), 
+        axis.text.x=element_text(size=12, color = "black"), axis.line = element_line(color = "black"), 
+        text = element_text(family = "Calibri"),
+        axis.title.x = element_blank(), panel.grid = element_blank(), 
+        plot.background = element_rect(color = "grey40", size = 0.5, fill = "white"),
+        panel.background = element_rect(color = "grey40", fill = "white"))
+
+ggsave(here("figures", "shiner abundance by year.png"), width = 4, height = 3, dpi = 400)
