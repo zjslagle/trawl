@@ -26,7 +26,7 @@ windowsFonts(Times=windowsFont("Times New Roman"))
 #open connection to trawl database
 #trawl_database <- odbcConnectAccess2007("//s.dnr.isi.oitfs.ohio.gov/DNRShares/Sandusky Fisheries Research/DuFour/1_Projects/1_Trawling/3_Database/Interagency Trawl XP.mdb")
 # work from home:
-oh_trawl_database <- odbcConnectAccess2007("data/Trawling Database.mdb")
+oh_trawl_database <- odbcConnectAccess2007("data sources/Trawling Database.mdb")
 #list tables in trawl database
 sqlTables(oh_trawl_database)
 #read in required data from trawl - note that if you don't use as_tibble, sqlFetch() returns an odd
@@ -36,9 +36,8 @@ oh_only_catch_raw <- as_tibble(sqlFetch(oh_trawl_database, "Trawl Catch"))
 #close connection to DB
 odbcCloseAll()
 
-
 # read in trawl lengths from separate database
-length_database <-  odbcConnectAccess2007("data/Trawl lengths xp")   #specifies the file path
+length_database <-  odbcConnectAccess2007("data sources/Trawl lengths xp")   #specifies the file path
 
 sqlTables(length_database)
 
@@ -57,7 +56,7 @@ odbcCloseAll()
 oh_only_length_data_raw <-list(LengthsA, LengthsB, LengthsC, Lengths1, Lengths2, Lengths3, Lengths4, Lengths5, Lengths6, Lengths7) %>% reduce(full_join)
 
 ### Species codes and names   ##########################################
-trawl_database <- odbcConnectAccess2007("data/Interagency Trawl XP.mdb")
+trawl_database <- odbcConnectAccess2007("data sources/Interagency Trawl XP.mdb")
 spp_codes <- as_tibble(sqlFetch(trawl_database, "1_Interagency Species Codes"))
 odbcCloseAll()
 

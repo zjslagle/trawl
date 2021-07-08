@@ -7,7 +7,7 @@ source("ohio read data.R")
 ### Calculate Biomass by site, so we can estimate biomass for species-years   ###########################
 
 #read Length-weight regression data (need to redo these at some point, who knows how old these are!)
-l_w_reg <- read_excel(here::here("data", "forlenwt.xls")) %>% janitor::clean_names()
+l_w_reg <- read_excel("data sources/forlenwt.xls") %>% janitor::clean_names()
 
 
 ### Make new Tibble with simulated TL for unmeasured fish and estimated wts (from L-W reg) ##########################################
@@ -33,7 +33,7 @@ oh_all_catch %>%
 oh_catch_summary %>%
   left_join(oh_length_summary) %>%  
   mutate(n_lengths = if_else(is.na(n_lengths), 0, as.double(n_lengths)),
-         n_lengths_to_make = sum_catch - n_lengths) %>%   filter(n_lengths_to_make < 0) %>% tail                # calc N lengths to make
+         n_lengths_to_make = sum_catch - n_lengths) %>%  # filter(n_lengths_to_make < 0) %>% tail                # calc N lengths to make
   filter(n_lengths_to_make > 0, n_lengths > 0) %>%                  #remove species/age classes that we don't measure (e.g. adult sportfish) OR WERE ALREADY MEASURED
   select(crn, year, species, agecode, mean_length, sd_length, n_lengths, n_lengths_to_make) -> lengths_to_make
 
@@ -47,7 +47,7 @@ sum(lengths_to_make$n_lengths_to_make) == nrow(new_lengths)
 new_lengths %>%
   mutate(length = round(rnorm(n(), mean = mean_length, sd = sd_length),0),
          length_type = "simulated") %>%
-  select(-mean_length, -sd_length, -year) -> new_lengths
+  select(-mean_length, -sd_length, -year, -n_lengths) -> new_lengths
 
 # join measured and simulated lengths into one
 oh_all_lengths %>%
@@ -109,7 +109,7 @@ oh_all_fish_data %>%
         biomass_per_area = total_weight/area_swept) %>%
   filter(year > 1991) -> oh_biomass_by_crn # should be grams per m2
 
-write_csv(oh_biomass_by_crn, path = here("data", "ohio trawl biomass by site.csv"))
+write_csv(oh_biomass_by_crn, path = "data derived/ohio trawl biomass by site.csv")
 
 
 

@@ -7,14 +7,17 @@ library(stringr)
 
 source("Read Trawl Data.R")
 
+map_folder = "C:/Users/zakjs/Documents/Ohio DoW/Maps/"
+# office map folder: "C:/Users/slaglez/Documents/Maps/"
+
 #read in shapefiles
-states = st_read("C:/Users/slaglez/Documents/Maps/ne_10m_admin_1_states_provinces.shp")
+states = st_read(paste(map_folder, "ne_10m_admin_1_states_provinces.shp", sep = ""))
 states %>% filter(gu_a3 == "CAN"|gu_a3 == "USA"|gu_a3 == "MEX") -> us_and_can #filter out US and CAN only
-lake_erie = st_read("C:/Users/slaglez/Documents/Maps/Lake_Erie_Shoreline.shp") #not sure where this came from but it's detailed - maybe G Steinhart's files
-feature_names = st_read("C:/Users/slaglez/Documents/Maps/ne_10m_populated_places.shp")
+lake_erie = st_read(paste(map_folder, "Lake_Erie_Shoreline.shp", sep = "")) #not sure where this came from but it's detailed - maybe G Steinhart's files
+feature_names = st_read(paste(map_folder, "ne_10m_populated_places.shp", sep = ""))
 feature_names %>% filter(NAME %in% c("Toledo", "Detroit")) -> feature_names #label for Toledo, must subset so BG doesn't show up
-urban_areas = st_read("C:/Users/slaglez/Documents/Maps/ne_10m_urban_areas.shp") #cities
-two_min_grid <- st_read("Z:/arcview/eriedata/2 minute grids lakewide.shp", crs = 4326)
+urban_areas = st_read(paste(map_folder, "ne_10m_urban_areas.shp", sep = "")) #cities
+two_min_grid <- st_read(paste(map_folder, "2 minute grids lakewide.shp", sep = ""), crs = 4326)
 
 #bounding box
 wb_bounds = c(xmin = -83.5935, ymin = 41.3498, xmax = -82.4193, ymax = 42.1235)
@@ -58,7 +61,8 @@ tm_shape(us_and_can, bbox = wb_bounds)+tm_fill()+ #plot land
   tm_add_legend(type = "symbol", labels = c("Low DO", "Normoxic"), col = c("firebrick1", "black"), alpha = 1)+
   tm_layout(legend.position = c(.05,.14), legend.frame = "black", legend.bg.color = "white", fontfamily = "Times")
 
-tmap_save(filename = paste(here("figures", paste("trawl sites map ", this_year, ".png", sep = ""))), width = 6, height = 5, units = "in")
+tmap_save(filename = paste("figures/trawl sites map ", this_year, ".png", sep = ""), 
+          width = 5, height = 4, units = "in")
 
 
 #### Interactive map   #########################

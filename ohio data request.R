@@ -1,8 +1,16 @@
-source("ohio read data.R")
-
 ### Read Ohio Data ######################################
+library(magrittr)
+library(forcats)
+require(RODBC)
+require(lubridate)
+require(stringr)
+require(here)
+require(readxl)
+library(tidyverse)
+
 # NOT THE SAME AS THE INTERAGENCY DB - Ohio has all months, vs Aug-only in Interagency
-ohio_trawl_database <- odbcConnectAccess2007("//s.dnr.isi.oitfs.ohio.gov/DNRShares/Sandusky Fisheries Research/DuFour/1_Projects/1_Trawling/3_Database/Trawling Database.mdb")
+#ohio_trawl_database <- odbcConnectAccess2007("//s.dnr.isi.oitfs.ohio.gov/DNRShares/Sandusky Fisheries Research/DuFour/1_Projects/1_Trawling/3_Database/Trawling Database.mdb")
+ohio_trawl_database <- odbcConnectAccess2007("data sources/Trawling Database.mdb")
 
 #list tables in trawl database
 #sqlTables(ohio_trawl_database)
@@ -17,6 +25,32 @@ odbcCloseAll()
 
 names(ohio_only_catch_raw) %<>% tolower
 names(ohio_only_effort_raw) %<>% tolower
+
+
+### Simple Ohio species lookup    ######
+ohio_only_catch_raw %>%
+  left_join(ohio_only_effort_raw) %>%
+  left_join(spp_codes) %>%
+  filter(common_name == "Tubenose goby") %>%
+  arrange(year, month, crn) %>%
+  select(crn, year, month, common_name, catch)
+
+### Rarest species    ####################################
+# show the most rare species from last three years; you can tinker with the last filter
+#     line to show more/fewer years and rarity
+
+ohio_only_catch_raw %>%
+  left_join(ohio_only_effort_raw) %>%
+  left_join(spp_codes) %>%
+  arrange(year, month) %>%
+  select(crn, year, month, common_name, catch) %>%
+  group_by(year, common_name) %>%
+  summarize(total_catch = sum(catch)) %>%
+  ungroup() %>%
+  mutate(rank = rank(total_catch, na.last = NA),
+          percent_rank = round(rank(total_catch, na.last = NA)/length(total_catch) * 100,1)) %>%
+  filter(year %in% (this_year-2):this_year, percent_rank < 10)
+
 
 
 ####  PK silver chub data request - 3/6/19   ############################
@@ -207,9 +241,12 @@ ohio_catch_summary_by_area %>%
   left_join(ohio_only_effort %>% select(projcode, crn, month, depth, stemp, btemp, secchi, botoxy, longitude, latitude))-> ohio_only_abs_abundance
 
 write_csv(ohio_only_abs_abundance,  
-          here("data", "data requests", "3_3_20 rel abundance by crn_spp_agecode ohio.csv"))
+          "data derived/data requests/3_3_20 rel abundance by crn_spp_agecode ohio.csv")
 
-
+ohio_only_abs_abundance %>%
+  filter(species == 334, agecode == 1) %>%
+  select(crn, year, month, longitude, latitude, common_name, agecode, fish_per_m2) %>%
+  write_csv("data derived/data requests/3_2_21 WAE Age0 trawl data.csv")
 
 ### Ohio darter catches ########################
 
@@ -247,3 +284,22 @@ abundance %>%
         panel.background = element_rect(color = "grey40", fill = "white"))
 
 ggsave(here("figures", "shiner abundance by year.png"), width = 4, height = 3, dpi = 400)
+
+### Data request - Hank Long's AP Research   ########################
+# emerald shiner and WAE data
+ohio_only_catch_raw %>%
+  complete(nesting(projcode, crn), species, age, fill = list(catch = 0)) %>%
+  left_join(ohio_only_effort_raw) %>%
+  left_join(spp_codes) %>%
+  filter(species == 196 & age %in% c(1,3)|
+            species == 63 & age == 1,
+         year %in% 1990:2019, effstat == 1) %>% 
+  select(year, month, crn, common_name, "age_code" = age, catch, "secchi_depth_m" = secchi, latitude, longitude) %>%
+  mutate(longitude = case_when(longitude < 0 ~ longitude,
+                               T ~ longitude *-1)) %>%
+  group_by(year, month, crn, common_name, age_code, secchi_depth_m, latitude, longitude) %>%
+    summarize(catch = sum(catch)) %>%
+  ungroup() %>%
+  unite(col = "spp_age_code", common_name, age_code, sep = " age_code_") %>%
+  spread(key = spp_age_code, value = catch) %>% janitor::clean_names() %>%
+  write_csv("data derived/data requests/odw trawl data for hank.csv")

@@ -1,15 +1,15 @@
 ### Forage Summary of whole-lake trends     ######################################
-# For Forage Task Group
+# For Forage Task Group LEC presentation
+# plot summaries of important forage fishes for 4 main trawl surveys:
+# WB/Interagency, CB Ohio, EB NY, EB ON (Long Point Bay)
 # Zak Slagle Mar 2020
 
 library(magrittr)
-#library(sqldf)
 library(forcats)
-require(RODBC)
 require(lubridate)
 require(stringr)
-require(here)
 require(readxl)
+require(ggpubr)
 library(tidyverse)
 
 
@@ -17,7 +17,7 @@ this_year = year(now())-1 #get this year
 windowsFonts(Times=windowsFont("Times New Roman"))
 
 # read data
-forage <- read_excel("C:/Users/slaglez/Documents/Forage TG/Forage Fish Trends_All Agencies.xlsx", sheet = "trawl_tall")
+forage <- read_excel("data sources/Forage Fish Trends_All Agencies.xlsx", sheet = "trawl_tall")
 
 forage %<>% mutate(basin = case_when(agency == "ON" ~ "LPB", T ~ basin))  # convert "ON" to Long Point Bay (see trawl lack of correlation, below)
 
@@ -48,12 +48,41 @@ eb_data_comp %>%
   theme_minimal()+
   scale_x_log10()+
   scale_y_log10()
-  
+
+#because of this, plot NY and ON LPB surveys separate 
 
 
 
 
 ### Abundance Plots by Species  ######################
+
+# theme with dark background and light colors for best PPT presentations
+inverse_theme <- function(){theme_transparent()+
+    theme(legend.position = "top",
+          rect = element_rect(fill = NA),
+          axis.title = element_text(size=18, color = "white"), 
+          axis.text.y=element_text(size=18), 
+          axis.text.x=element_text(size=18, vjust=.1), 
+          axis.line = element_line(color = "white"),
+          axis.ticks = element_line(color = "white"),
+          panel.background = element_blank(),
+          panel.border = element_blank(),
+          panel.grid = element_blank(),
+          plot.background = element_rect(fill = "#001F3A"),
+          plot.title = element_text(color = "grey30", size = 10, face = "italic"),
+          legend.text = element_text(size = 18, color = "white"),
+          legend.title = element_text(size = 18, color = "white"), 
+          legend.key.width = unit(20, "mm"),
+          strip.background = element_blank(),
+          strip.text = element_text(size = 18, color = "white"),
+          axis.text = element_text(color = "white"))}
+
+# colors for different basins - trying to fine tune so they are most visibile/distinguishable 
+# and don't look like shit
+test_colors <- c("#51C1AB", "#FFD56B", "#6371C9", "#FFA56B")
+new_colors <- c("#68affc", "#ff864a", "#fffa66", "white")
+colors <- new_colors
+line_types = c(1, 2, 1, 95) #line types across all line graphs
 
 # Smelt YOY
 forage %>%
@@ -62,20 +91,17 @@ forage %>%
   summarize(mean_abundance = mean(abundance_per_ha)) %>%
   ungroup %>%
   mutate(basin = fct_relevel(basin, "WB", "CB", "EB", "LPB")) %>%
-  ggplot(aes(x = year, y = mean_abundance, color = basin))+
+  ggplot(aes(x = year, y = mean_abundance, color = basin, lty = basin))+
   geom_line(lwd = 2)+
   scale_x_continuous(expand = c(0,.5), breaks = seq(1988,this_year,by=3), limits = c(2000, this_year))+
   scale_y_continuous(expand = c(0,0))+
-  scale_color_manual("Basin", values = c("#51C1AB", "#FFD56B", "#6371C9", "#FFA56B"))+
+  scale_color_manual("Basin", values = colors)+
+  scale_linetype_manual("Basin", values = line_types)+
   labs(x="", y="Fish/ha", title = "Rainbow Smelt YOY")+
-  theme(axis.title = element_text(size=16, face = "bold"), axis.text.y=element_text(size=16, color = "black"), 
-        axis.text.x=element_text(size=16, vjust=1, color = "black"), axis.line = element_line(color = "black"), 
-        panel.background = element_blank(), text = element_text(family = "Times"),
-        legend.text = element_text(size = 14, face = "bold"), legend.title = element_text(size = 14, face = "bold"), legend.key = element_blank(),
-        strip.background = element_rect(fill = "white", color = "black"), strip.text = element_text(face = "bold", size = 12),
-        rect = element_rect(fill = "transparent"), legend.position = c(.9, .9), plot.title = element_text(color = "grey70", size = 10))-> smelt_yoy
+  inverse_theme()-> smelt_yoy
 
-ggsave(plot = smelt_yoy, here("figures", "whole lake","smelt YOY.png"), width = 10, height = 6.5, units = "in",dpi = 600)
+
+ggsave(plot = smelt_yoy, "figures/whole lake/abundance - smelt YOY.png", width = 10, height = 6.5, units = "in",dpi = 600)
 
 
 # Smelt adult
@@ -85,66 +111,35 @@ forage %>%
   summarize(mean_abundance = mean(abundance_per_ha)) %>%
   ungroup %>%
   mutate(basin = fct_relevel(basin, "WB", "CB", "EB", "LPB")) %>%
-  ggplot(aes(x = year, y = mean_abundance, color = basin))+
+  ggplot(aes(x = year, y = mean_abundance, color = basin, lty = basin))+
+  scale_linetype_manual("Basin", values = line_types)+
   geom_line(lwd = 2)+
   scale_x_continuous(expand = c(0,.5), breaks = seq(1988,this_year,by=3), limits = c(2000, this_year))+
   scale_y_continuous(expand = c(0,0))+
-  scale_color_manual("Basin", values = c("#51C1AB", "#FFD56B", "#6371C9", "#FFA56B"))+
+  scale_color_manual("Basin", values = colors)+
   labs(x="", y="Fish/ha", title = "Rainbow Smelt YAO")+
-  theme(axis.title = element_text(size=16, face = "bold"), axis.text.y=element_text(size=16, color = "black"), 
-        axis.text.x=element_text(size=16, vjust=1, color = "black"), axis.line = element_line(color = "black"), 
-        panel.background = element_blank(), text = element_text(family = "Times"),
-        legend.text = element_text(size = 14, face = "bold"), legend.title = element_text(size = 14, face = "bold"), legend.key = element_blank(),
-        strip.background = element_rect(fill = "white", color = "black"), strip.text = element_text(face = "bold", size = 12),
-        rect = element_rect(fill = "transparent"), legend.position = c(.9, .9), plot.title = element_text(color = "grey70", size = 10))-> smelt_adult
+  inverse_theme()-> smelt_adult
 
-ggsave(plot = smelt_adult, here("figures", "whole lake","smelt adult.png"), width = 10, height = 6.5, units = "in",dpi = 600)
+ggsave(plot = smelt_adult, "figures/whole lake/abundance - smelt adult.png", width = 10, height = 6.5, units = "in",dpi = 600)
 
 
-# Shiner YOY
+# Shiner TOTAL
 forage %>%
-  filter(species == "Emerald Shiner" & age_class == "YOY" & !is.na(abundance_per_ha) & agency != "MI") %>%
+  filter(species == "Emerald Shiner" & !is.na(abundance_per_ha) & agency != "MI") %>%
   group_by(year, basin) %>%
   summarize(mean_abundance = mean(abundance_per_ha)) %>%
   ungroup %>%
   mutate(basin = fct_relevel(basin, "WB", "CB", "EB", "LPB")) %>%
-  ggplot(aes(x = year, y = mean_abundance, color = basin))+
+  ggplot(aes(x = year, y = mean_abundance, color = basin, lty = basin))+
   geom_line(lwd = 2)+
   scale_x_continuous(expand = c(0,.5), breaks = seq(1988,this_year,by=3), limits = c(2000, this_year))+
   scale_y_continuous(expand = c(0,0))+
-  scale_color_manual("Basin", values = c("#51C1AB", "#FFD56B", "#6371C9", "#FFA56B"))+
-  labs(x="", y="Fish/ha", title = "Emerald Shiner YOY")+
-  theme(axis.title = element_text(size=16, face = "bold"), axis.text.y=element_text(size=16, color = "black"), 
-        axis.text.x=element_text(size=16, vjust=1, color = "black"), axis.line = element_line(color = "black"), 
-        panel.background = element_blank(), text = element_text(family = "Times"),
-        legend.text = element_text(size = 14, face = "bold"), legend.title = element_text(size = 14, face = "bold"), legend.key = element_blank(),
-        strip.background = element_rect(fill = "white", color = "black"), strip.text = element_text(face = "bold", size = 12),
-        rect = element_rect(fill = "transparent"), legend.position = c(.9, .9), plot.title = element_text(color = "grey70", size = 10))-> shiner_yoy
+  scale_color_manual("Basin", values = colors)+
+  scale_linetype_manual("Basin", values = line_types)+
+  labs(x="", y="Fish/ha", title = "Emerald Shiner All Ages")+
+  inverse_theme()-> shiner
 
-ggsave(plot = shiner_yoy, here("figures", "whole lake","shiner YOY.png"), width = 10, height = 6.5, units = "in",dpi = 600)
-
-
-# Shiner adult
-forage %>%
-  filter(species == "Emerald Shiner" & age_class == "YAO" & !is.na(abundance_per_ha) & agency != "MI") %>%
-  group_by(year, basin) %>%
-  summarize(mean_abundance = mean(abundance_per_ha)) %>%
-  ungroup %>%
-  mutate(basin = fct_relevel(basin, "WB", "CB", "EB", "LPB")) %>%
-  ggplot(aes(x = year, y = mean_abundance, color = basin))+
-  geom_line(lwd = 2)+
-  scale_x_continuous(expand = c(0,.5), breaks = seq(1988,this_year,by=3), limits = c(2000, this_year))+
-  scale_y_continuous(expand = c(0,0))+
-  scale_color_manual("Basin", values = c("#51C1AB", "#FFD56B", "#6371C9", "#FFA56B"))+
-  labs(x="", y="Fish/ha", title = "Emerald Shiner YAO")+
-  theme(axis.title = element_text(size=16, face = "bold"), axis.text.y=element_text(size=16, color = "black"), 
-        axis.text.x=element_text(size=16, vjust=1, color = "black"), axis.line = element_line(color = "black"), 
-        panel.background = element_blank(), text = element_text(family = "Times"),
-        legend.text = element_text(size = 14, face = "bold"), legend.title = element_text(size = 14, face = "bold"), legend.key = element_blank(),
-        strip.background = element_rect(fill = "white", color = "black"), strip.text = element_text(face = "bold", size = 12),
-        rect = element_rect(fill = "transparent"), legend.position = c(.9, .9), plot.title = element_text(color = "grey70", size = 10))-> shiner_adult
-
-ggsave(plot = shiner_adult, here("figures", "whole lake","shiner adult.png"), width = 10, height = 6.5, units = "in",dpi = 600)
+ggsave(plot = shiner, "figures/whole lake/abundance - shiner ALL AGES.png", width = 10, height = 6.5, units = "in",dpi = 600)
 
 
 # Shad YOY
@@ -154,20 +149,16 @@ forage %>%
   summarize(mean_abundance = mean(abundance_per_ha)) %>%
   ungroup %>%
   mutate(basin = fct_relevel(basin, "WB", "CB", "EB", "LPB")) %>%
-  ggplot(aes(x = year, y = mean_abundance, color = basin))+
+  ggplot(aes(x = year, y = mean_abundance, color = basin, lty = basin))+
+  scale_linetype_manual("Basin", values = line_types)+
   geom_line(lwd = 2)+
   scale_x_continuous(expand = c(0,.5), breaks = seq(1988,this_year,by=3), limits = c(2000, this_year))+
   scale_y_continuous(expand = c(0,0))+
-  scale_color_manual("Basin", values = c("#51C1AB", "#FFD56B", "#6371C9", "#FFA56B"))+
+  scale_color_manual("Basin", values = colors)+
   labs(x="", y="Fish/ha", title = "Gizzard Shad YOY")+
-  theme(axis.title = element_text(size=16, face = "bold"), axis.text.y=element_text(size=16, color = "black"), 
-        axis.text.x=element_text(size=16, vjust=1, color = "black"), axis.line = element_line(color = "black"), 
-        panel.background = element_blank(), text = element_text(family = "Times"),
-        legend.text = element_text(size = 14, face = "bold"), legend.title = element_text(size = 14, face = "bold"), legend.key = element_blank(),
-        strip.background = element_rect(fill = "white", color = "black"), strip.text = element_text(face = "bold", size = 12),
-        rect = element_rect(fill = "transparent"), legend.position = c(.9, .9), plot.title = element_text(color = "grey70", size = 10))-> shad_yoy
+  inverse_theme()-> shad_yoy
 
-ggsave(plot = shad_yoy, here("figures", "whole lake","shad YOY.png"), width = 10, height = 6.5, units = "in",dpi = 600)
+ggsave(plot = shad_yoy, "figures/whole lake/abundance - shad YOY.png", width = 10, height = 6.5, units = "in",dpi = 600)
 
 # Goby
 forage %>%
@@ -176,20 +167,16 @@ forage %>%
   summarize(mean_abundance = mean(abundance_per_ha)) %>%
   ungroup %>%
   mutate(basin = fct_relevel(basin, "WB", "CB", "EB", "LPB")) %>%
-  ggplot(aes(x = year, y = mean_abundance, color = basin))+
+  ggplot(aes(x = year, y = mean_abundance, color = basin, lty = basin))+
   geom_line(lwd = 2)+
   scale_x_continuous(expand = c(0,.5), breaks = seq(1988,this_year,by=3), limits = c(2000, this_year))+
   scale_y_continuous(expand = c(0,0))+
-  scale_color_manual("Basin", values = c("#51C1AB", "#FFD56B", "#6371C9", "#FFA56B"))+
+  scale_color_manual("Basin", values = colors)+
+  scale_linetype_manual("Basin", values = line_types)+
   labs(x="", y="Fish/ha", title = "Round Goby")+
-  theme(axis.title = element_text(size=16, face = "bold"), axis.text.y=element_text(size=16, color = "black"), 
-        axis.text.x=element_text(size=16, vjust=1, color = "black"), axis.line = element_line(color = "black"), 
-        panel.background = element_blank(), text = element_text(family = "Times"),
-        legend.text = element_text(size = 14, face = "bold"), legend.title = element_text(size = 14, face = "bold"), legend.key = element_blank(),
-        strip.background = element_rect(fill = "white", color = "black"), strip.text = element_text(face = "bold", size = 12),
-        rect = element_rect(fill = "transparent"), legend.position = c(.9, .9), plot.title = element_text(color = "grey70", size = 10))-> goby_all
+  inverse_theme()-> goby_all
 
-ggsave(plot = goby_all, here("figures", "whole lake","goby all.png"), width = 10, height = 6.5, units = "in",dpi = 600)
+ggsave(plot = goby_all, "figures/whole lake/abundance - goby all.png", width = 10, height = 6.5, units = "in",dpi = 600)
 
 
 
@@ -198,6 +185,9 @@ ggsave(plot = goby_all, here("figures", "whole lake","goby all.png"), width = 10
 #calc percentile rank within basin 
 forage %>%
   filter(!is.na(abundance_per_ha) & agency != "MI") %>%
+  mutate(age_class = if_else(species == "Emerald Shiner", #group all ages of shiner together
+                             "all ages",
+                             age_class)) %>%
   group_by(year, basin, species, age_class) %>%
   summarize(mean_abundance = mean(abundance_per_ha)) %>%
   ungroup %>%
@@ -205,7 +195,7 @@ forage %>%
   mutate(rank = rank(mean_abundance, na.last = NA), 
          n = length(mean_abundance),
          percent_rank = round(rank(mean_abundance, na.last = NA)/length(mean_abundance) * 100,1), #percentile rank
-         over_under_rank = percent_rank-50) %>%                                                   # percentile rank relative to 50% (under = negative)
+         over_under_rank = percent_rank-50) %>%               # percentile rank relative to 50% (under = negative)
   arrange(basin, species, age_class, year) %>% 
   ungroup -> forage_ranked
 
@@ -215,21 +205,21 @@ forage_ranked %>%
   mutate(basin = fct_relevel(basin, "WB", "CB", "EB", "LPB")) %>%
   ggplot(aes(x = year, y = over_under_rank, fill = basin))+
   geom_col(position = "dodge")+
+  geom_hline(aes(yintercept = 0), 
+             col = "white",
+             size = 1)+
   facet_grid(basin ~ .)+
-  scale_x_continuous(expand = c(0,0), breaks = seq(1988,this_year,by=3), limits = c(1999, this_year+1))+
-  scale_y_continuous(expand = c(0,0))+
-  scale_fill_manual("Basin", values = c("#51C1AB", "#FFD56B", "#6371C9", "#FFA56B"))+
-  geom_hline(aes(yintercept = 0))+
-  labs(x="", y="Percentile rank (%)", title = "Rainbow Smelt YOY")+
-  theme(axis.title = element_text(size=16, face = "bold"), axis.text.y=element_text(size=16, color = "black"), 
-        axis.text.x=element_text(size=16, vjust=1, color = "black"), axis.line = element_line(color = "black"), 
-        panel.background = element_blank(), text = element_text(family = "Times"),
-        legend.text = element_text(size = 14, face = "bold"), legend.title = element_text(size = 14, face = "bold"), legend.key = element_blank(),
-        strip.background = element_rect(fill = "white", color = "black"), strip.text = element_text(face = "bold", size = 12),
-        rect = element_rect(fill = "transparent"), legend.position = "top", plot.title = element_text(color = "grey70", size = 10),
-        panel.spacing.y = unit(5, "mm"))-> smelt_yoy_percent
+  scale_x_continuous(expand = c(0,0), 
+                     breaks = seq(1988,this_year,by=3), limits = c(1999, this_year+1))+
+  scale_y_continuous(expand = c(0,0),
+                     breaks = c(-25, 0, 25),
+                     labels = c("-25%", "0%", "+25%"))+
+  scale_fill_manual("Basin", values = colors)+
+  labs(x="", y="Percentile rank (% relative to 50%)", title = "Rainbow Smelt YOY")+
+  inverse_theme()-> smelt_yoy_percent
 
-ggsave(plot = smelt_yoy_percent, here("figures", "whole lake","percentile - smelt YOY.png"), width = 10, height = 6.5, units = "in",dpi = 600)
+ggsave(plot = smelt_yoy_percent, "figures/whole lake/percentile - smelt YOY.png", 
+       width = 10, height = 6.5, units = "in", dpi = 600)
 
 
 # Smelt adult
@@ -238,65 +228,40 @@ forage_ranked %>%
   mutate(basin = fct_relevel(basin, "WB", "CB", "EB", "LPB")) %>%
   ggplot(aes(x = year, y = over_under_rank, fill = basin))+
   geom_col(position = "dodge")+
+  geom_hline(aes(yintercept = 0), 
+             col = "white",
+             size = 1)+
   facet_grid(basin ~ .)+
   scale_x_continuous(expand = c(0,0), breaks = seq(1988,this_year,by=3), limits = c(1999, this_year+1))+
-  scale_y_continuous(expand = c(0,0))+
-  scale_fill_manual("Basin", values = c("#51C1AB", "#FFD56B", "#6371C9", "#FFA56B"))+
-  geom_hline(aes(yintercept = 0))+
-  labs(x="", y="Percentile rank (%)", title = "Rainbow Smelt adult")+
-  theme(axis.title = element_text(size=16, face = "bold"), axis.text.y=element_text(size=16, color = "black"), 
-        axis.text.x=element_text(size=16, vjust=1, color = "black"), axis.line = element_line(color = "black"), 
-        panel.background = element_blank(), text = element_text(family = "Times"),
-        legend.text = element_text(size = 14, face = "bold"), legend.title = element_text(size = 14, face = "bold"), legend.key = element_blank(),
-        strip.background = element_rect(fill = "white", color = "black"), strip.text = element_text(face = "bold", size = 12),
-        rect = element_rect(fill = "transparent"), legend.position = "top", plot.title = element_text(color = "grey70", size = 10),
-        panel.spacing.y = unit(5, "mm"))-> smelt_adult_percent
+  scale_y_continuous(expand = c(0,0),
+                     breaks = c(-25, 0, 25),
+                     labels = c("-25%", "0%", "+25%"))+
+  scale_fill_manual("Basin", values = colors)+
+  labs(x="", y="Percentile rank (% relative to 50%)", title = "Rainbow Smelt adult")+
+  inverse_theme()-> smelt_adult_percent
 
-ggsave(plot = smelt_adult_percent, here("figures", "whole lake","percentile - smelt adult.png"), width = 10, height = 6.5, units = "in",dpi = 600)
+ggsave(plot = smelt_adult_percent, "figures/whole lake/percentile - smelt adult.png", width = 10, height = 6.5, units = "in",dpi = 600)
 
-# shiner YOY
+# shiner All Ages
 forage_ranked %>%
-  filter(species == "Emerald Shiner" & age_class == "YOY" & !is.na(mean_abundance) & year > 1999) %>%
+  filter(species == "Emerald Shiner" & !is.na(mean_abundance) & year > 1999) %>%
   mutate(basin = fct_relevel(basin, "WB", "CB", "EB", "LPB")) %>%
   ggplot(aes(x = year, y = over_under_rank, fill = basin))+
   geom_col(position = "dodge")+
+  geom_hline(aes(yintercept = 0), 
+             col = "white",
+             size = 1)+
   facet_grid(basin ~ .)+
   scale_x_continuous(expand = c(0,0), breaks = seq(1988,this_year,by=3), limits = c(1999, this_year+1))+
-  scale_y_continuous(expand = c(0,0))+
-  scale_fill_manual("Basin", values = c("#51C1AB", "#FFD56B", "#6371C9", "#FFA56B"))+
-  geom_hline(aes(yintercept = 0))+
-  labs(x="", y="Percentile rank (%)", title = "Emerald Shiner YOY")+
-  theme(axis.title = element_text(size=16, face = "bold"), axis.text.y=element_text(size=16, color = "black"), 
-        axis.text.x=element_text(size=16, vjust=1, color = "black"), axis.line = element_line(color = "black"), 
-        panel.background = element_blank(), text = element_text(family = "Times"),
-        legend.text = element_text(size = 14, face = "bold"), legend.title = element_text(size = 14, face = "bold"), legend.key = element_blank(),
-        strip.background = element_rect(fill = "white", color = "black"), strip.text = element_text(face = "bold", size = 12),
-        rect = element_rect(fill = "transparent"), legend.position = "top", plot.title = element_text(color = "grey70", size = 10),
-        panel.spacing.y = unit(5, "mm"))-> shiner_yoy_percent
+  scale_y_continuous(expand = c(0,0),
+                     breaks = c(-25, 0, 25),
+                     labels = c("-25%", "0%", "+25%"))+
+  scale_fill_manual("Basin", values = colors)+
+  labs(x="", y="Percentile rank (% relative to 50%)", title = "Emerald Shiner All Ages")+
+  inverse_theme()-> shiner_percent
 
-ggsave(plot = shiner_yoy_percent, here("figures", "whole lake","percentile - shiner YOY.png"), width = 10, height = 6.5, units = "in",dpi = 600)
-
-# shiner adult
-forage_ranked %>%
-  filter(species == "Emerald Shiner" & age_class == "YAO" & !is.na(mean_abundance) & year > 1999) %>%
-  mutate(basin = fct_relevel(basin, "WB", "CB", "EB", "LPB")) %>%
-  ggplot(aes(x = year, y = over_under_rank, fill = basin))+
-  geom_col(position = "dodge")+
-  facet_grid(basin ~ .)+
-  scale_x_continuous(expand = c(0,0), breaks = seq(1988,this_year,by=3), limits = c(1999, this_year+1))+
-  scale_y_continuous(expand = c(0,0))+
-  scale_fill_manual("Basin", values = c("#51C1AB", "#FFD56B", "#6371C9", "#FFA56B"))+
-  geom_hline(aes(yintercept = 0))+
-  labs(x="", y="Percentile rank (%)", title = "Emerald Shiner adult")+
-  theme(axis.title = element_text(size=16, face = "bold"), axis.text.y=element_text(size=16, color = "black"), 
-        axis.text.x=element_text(size=16, vjust=1, color = "black"), axis.line = element_line(color = "black"), 
-        panel.background = element_blank(), text = element_text(family = "Times"),
-        legend.text = element_text(size = 14, face = "bold"), legend.title = element_text(size = 14, face = "bold"), legend.key = element_blank(),
-        strip.background = element_rect(fill = "white", color = "black"), strip.text = element_text(face = "bold", size = 12),
-        rect = element_rect(fill = "transparent"), legend.position = "top", plot.title = element_text(color = "grey70", size = 10),
-        panel.spacing.y = unit(5, "mm"))-> shiner_adult_percent
-
-ggsave(plot = shiner_adult_percent, here("figures", "whole lake","percentile - shiner adult.png"), width = 10, height = 6.5, units = "in",dpi = 600)
+ggsave(plot = shiner_percent, "figures/whole lake/percentile - shiner ALL AGES.png", 
+       width = 10, height = 6.5, units = "in",dpi = 600)
 
 # shad YOY
 forage_ranked %>%
@@ -304,21 +269,19 @@ forage_ranked %>%
   mutate(basin = fct_relevel(basin, "WB", "CB", "EB", "LPB")) %>%
   ggplot(aes(x = year, y = over_under_rank, fill = basin))+
   geom_col(position = "dodge")+
+  geom_hline(aes(yintercept = 0), 
+             col = "white",
+             size = 1)+
   facet_grid(basin ~ .)+
   scale_x_continuous(expand = c(0,0), breaks = seq(1988,this_year,by=3), limits = c(1999, this_year+1))+
-  scale_y_continuous(expand = c(0,0))+
-  scale_fill_manual("Basin", values = c("#51C1AB", "#FFD56B", "#6371C9", "#FFA56B"))+
-  geom_hline(aes(yintercept = 0))+
-  labs(x="", y="Percentile rank (%)", title = "Gizzard Shad YOY")+
-  theme(axis.title = element_text(size=16, face = "bold"), axis.text.y=element_text(size=16, color = "black"), 
-        axis.text.x=element_text(size=16, vjust=1, color = "black"), axis.line = element_line(color = "black"), 
-        panel.background = element_blank(), text = element_text(family = "Times"),
-        legend.text = element_text(size = 14, face = "bold"), legend.title = element_text(size = 14, face = "bold"), legend.key = element_blank(),
-        strip.background = element_rect(fill = "white", color = "black"), strip.text = element_text(face = "bold", size = 12),
-        rect = element_rect(fill = "transparent"), legend.position = "top", plot.title = element_text(color = "grey70", size = 10),
-        panel.spacing.y = unit(5, "mm"))-> shad_yoy_percent
+  scale_y_continuous(expand = c(0,0),
+                     breaks = c(-25, 0, 25),
+                     labels = c("-25%", "0%", "+25%"))+
+  scale_fill_manual("Basin", values = colors)+
+  labs(x="", y="Percentile rank (% relative to 50%)", title = "Gizzard Shad YOY")+
+  inverse_theme()-> shad_yoy_percent
 
-ggsave(plot = shad_yoy_percent, here("figures", "whole lake","percentile - shad YOY.png"), width = 10, height = 6.5, units = "in",dpi = 600)
+ggsave(plot = shad_yoy_percent, "figures/whole lake/percentile - shad YOY.png", width = 10, height = 6.5, units = "in",dpi = 600)
 
 # Goby all
 forage_ranked %>%
@@ -326,69 +289,74 @@ forage_ranked %>%
   mutate(basin = fct_relevel(basin, "WB", "CB", "EB", "LPB")) %>%
   ggplot(aes(x = year, y = over_under_rank, fill = basin))+
   geom_col(position = "dodge")+
+  geom_hline(aes(yintercept = 0), 
+             col = "white",
+             size = 1)+
   facet_grid(basin ~ .)+
   scale_x_continuous(expand = c(0,0), breaks = seq(1988,this_year,by=3), limits = c(1999, this_year+1))+
-  scale_y_continuous(expand = c(0,0))+
-  scale_fill_manual("Basin", values = c("#51C1AB", "#FFD56B", "#6371C9", "#FFA56B"))+
-  geom_hline(aes(yintercept = 0))+
-  labs(x="", y="Percentile rank (%)", title = "Round Goby")+
-  theme(axis.title = element_text(size=16, face = "bold"), axis.text.y=element_text(size=16, color = "black"), 
-        axis.text.x=element_text(size=16, vjust=1, color = "black"), axis.line = element_line(color = "black"), 
-        panel.background = element_blank(), text = element_text(family = "Times"),
-        legend.text = element_text(size = 14, face = "bold"), legend.title = element_text(size = 14, face = "bold"), legend.key = element_blank(),
-        strip.background = element_rect(fill = "white", color = "black"), strip.text = element_text(face = "bold", size = 12),
-        rect = element_rect(fill = "transparent"), legend.position = "top", plot.title = element_text(color = "grey70", size = 10),
-        panel.spacing.y = unit(5, "mm"))-> goby_percent
+  scale_y_continuous(expand = c(0,0),
+                     breaks = c(-25, 0, 25),
+                     labels = c("-25%", "0%", "+25%"))+
+  scale_fill_manual("Basin", values = colors)+
+  labs(x="", y="Percentile rank (% relative to 50%)", title = "Round Goby")+
+  inverse_theme()-> goby_percent
 
-ggsave(plot = goby_percent, here("figures", "whole lake","percentile - goby.png"), width = 10, height = 6.5, units = "in",dpi = 600)
+ggsave(plot = goby_percent, "figures/whole lake/percentile - goby.png", width = 10, height = 6.5, units = "in",dpi = 600)
 
 
 
 
-### Powerpoint graphs (for dark background)   #######################
+### SOLE (State of Lake Erie) - Indicator graphs by Basin for 2020 LEC Pres   ############################
 
-library(export); library(ggpubr)
-source("FTG graphs.R") # for density_by_group graph
+#"total forage" must be calculated from forage functional groups
+total_forage <- forage %>%
+  filter(age_class == "all") %>%
+  group_by(year, basin) %>%
+  summarize(total_forage = sum(abundance_per_ha)) %>% 
+  ungroup
 
+mean_forage <- total_forage %>% #mean of time series in the typical graphs, so ~1990 to present
+  group_by(basin) %>%
+  summarize(mean_forage = mean(total_forage)) %>%
+  mutate(x_value = rep(2017, 3))
 
-# theme with inverse colors
-inverse_theme <- function(){theme_transparent()+
-    theme(legend.position = "top",
-          axis.title = element_text(size=25), 
-          axis.text.y=element_text(size=18, vjust=-.1), 
-          axis.text.x=element_text(size=18, vjust=.1), 
-          axis.line = element_line(color = "white"),
-          axis.ticks = element_line(color = "white"),
-          panel.background = element_blank(),
-          panel.border = element_blank(),
-          panel.grid.major = element_blank(),
-          panel.grid.minor = element_blank(),
-          plot.background = element_blank(),
-          legend.text = element_text(size = 18),
-          legend.title = element_text(size = 18),
-          strip.background = element_blank(),
-          strip.text = element_text(size = 18, color = "white"),
-          text = element_text(color = "white"),
-          axis.text = element_text(color = "white"))}
+#graph it!
+total_forage_all_basins <- total_forage %>%
+  ggplot(aes(x = year, y = total_forage, color = basin))+
+  geom_hline(data = mean_forage,
+             aes(yintercept = mean_forage),
+             color = "grey70",
+             size = 3,
+             lty = 3)+
+  geom_line(lwd = 2)+
+  geom_text(data = mean_forage,
+            aes(x = x_value, 
+                y = mean_forage,
+                label = basin),
+            size = 6,
+            color = "black",
+            nudge_y = -3)+
+  scale_x_continuous(expand = c(0,.5), 
+                     breaks = seq(1990, this_year, by=5), 
+                     limits = c(1990, this_year))+
+  scale_y_continuous(expand = c(0,0),                     # MUST ADJUST THIS if forage numbers get big!
+                     limits = c(0, 9000))+ 
+  scale_color_manual("Basin", values = c("#51C1AB", "#FFD56B", "#6371C9"))+
+  labs(x="", y="Fish/ha")+
+  inverse_theme()
 
-# add each graph to PPT file - first graph overwrites, remainder append
-graph2ppt(x = density_by_group + inverse_theme(), width = 10, height = 6.5, file = here("figures", "whole lake", "LEC figs.pptx"), append = FALSE)
-graph2ppt(x = smelt_yoy + inverse_theme(), width = 10, height = 6.5, file = here("figures", "whole lake", "LEC figs.pptx"), append = TRUE)
-graph2ppt(x = smelt_adult + inverse_theme(), width = 10, height = 6.5, file = here("figures", "whole lake", "LEC figs.pptx"), append = TRUE)
-graph2ppt(x = shiner_yoy + inverse_theme(), width = 10, height = 6.5, file = here("figures", "whole lake", "LEC figs.pptx"), append = TRUE)
-graph2ppt(x = shiner_adult + inverse_theme(), width = 10, height = 6.5, file = here("figures", "whole lake", "LEC figs.pptx"), append = TRUE)
-graph2ppt(x = shad_yoy + inverse_theme(), width = 10, height = 6.5, file = here("figures", "whole lake", "LEC figs.pptx"), append = TRUE)
-graph2ppt(x = goby_all + inverse_theme(), width = 10, height = 6.5, file = here("figures", "whole lake", "LEC figs.pptx"), append = TRUE)
-graph2ppt(x = smelt_yoy_percent + inverse_theme() + geom_hline(aes(yintercept = 0), col = "white"), 
-          width = 10, height = 6.5, file = here("figures", "whole lake", "LEC figs.pptx"), append = TRUE)
-graph2ppt(x = smelt_adult_percent + inverse_theme() + geom_hline(aes(yintercept = 0), col = "white"), 
-          width = 10, height = 6.5, file = here("figures", "whole lake", "LEC figs.pptx"), append = TRUE)
-graph2ppt(x = shiner_yoy_percent + inverse_theme() + geom_hline(aes(yintercept = 0), col = "white"), 
-          width = 10, height = 6.5, file = here("figures", "whole lake", "LEC figs.pptx"), append = TRUE)
-graph2ppt(x = shiner_adult_percent + inverse_theme() + geom_hline(aes(yintercept = 0), col = "white"), 
-          width = 10, height = 6.5, file = here("figures", "whole lake", "LEC figs.pptx"), append = TRUE)
-graph2ppt(x = shad_yoy_percent + inverse_theme() + geom_hline(aes(yintercept = 0), col = "white"), 
-          width = 10, height = 6.5, file = here("figures", "whole lake", "LEC figs.pptx"), append = TRUE)
-graph2ppt(x = goby_percent + inverse_theme() + geom_hline(aes(yintercept = 0), col = "white"), 
-          width = 10, height = 6.5, file = here("figures", "whole lake", "LEC figs.pptx"), append = TRUE)
+total_forage_all_basins
 
+ggsave(plot = total_forage_all_basins, 
+       "figures/whole lake/total forage abundance, all basins.png", 
+       width = 10, height = 6.5, units = "in",dpi = 600)
+
+# cut down to just last 5 years
+sole_graph <- total_forage_all_basins+
+  scale_x_continuous(expand = c(0,.5), 
+                     breaks = 2016:2020, 
+                     limits = c(2016, 2020))
+
+sole_graph
+
+write_csv(total_forage, "data derived/ftg sole indicator - all forage combined.csv")

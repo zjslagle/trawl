@@ -31,7 +31,7 @@ library(tidyverse)
 ##########################################
 ## bring in data
 #chan1 <-  odbcConnectAccess2007("C:/Users/dufour/Documents/1_Projects/1_Trawling/3_Database/Trawling Database")   #specifies the file path
-chan1 <-  odbcConnectAccess2007("data/Trawling Database")   #specifies the file path
+chan1 <-  odbcConnectAccess2007("data sources/Trawling Database")   #specifies the file path
 
 Effort <- sqlFetch(chan1, "Trawl Effort") 
 Catch  <- sqlFetch(chan1, "Trawl Catch") 
@@ -40,7 +40,7 @@ odbcCloseAll()
 table(Effort$Year,Effort$T_MON)
 
 #chan2 <-  odbcConnectAccess2007("C:/Users/dufour/Documents/1_Projects/1_Trawling/3_Database/Trawl lengths xp")   #specifies the file path
-chan2 <-  odbcConnectAccess2007("data/Trawl lengths xp")   #specifies the file path
+chan2 <-  odbcConnectAccess2007("data sources/Trawl lengths xp")   #specifies the file path
 
 Lengths1 <- sqlFetch(chan2, "TRAWL LENGTHS 1985-89") 
 Lengths2 <- sqlFetch(chan2, "TRAWL LENGTHS 1990-94") 
@@ -207,7 +207,7 @@ dim(Length2)
 ## Bring in L-W regression estimates and merge with Length2 (mm-g) #should this be Ohio Specific or updated?
 ###########################################################
 #LWreg <- read.csv("C:/Users/dufour/Documents/1_Projects/1_Trawling/4_Abundance Indices/1_SAS_programs/2_Inter-agency/FTG/forlenwt.csv",sep=",",header=T)  ## bring in data
-LWreg <- readxl::read_excel(("data/forlenwt.xls")) 
+LWreg <- readxl::read_excel("data sources/forlenwt.xls") 
 
 colnames(LWreg) <- c("SPECIES","INT","SLOPE","AGE") ## rename columns
 
@@ -367,7 +367,7 @@ head(Combo2)
 dim(Combo2)
 
 Combo2_exp <- cbind(Combo2[,1:3],Combo2[,4:38]*10000) # convert to g/ha (?) 
-write.csv(Combo2_exp, "Ohio_WBtrawl_CRNdensity_1992_2018.csv")
+write.csv(Combo2_exp, "data derived/DuFour Ohio_WBtrawl_CRNdensity_1992_2018.csv")
 
 
 ## Calculate average biomass as grams per square-m 
@@ -459,7 +459,7 @@ dim(Totals2)
 
 
 ## save as .csv
-write.csv(Totals2, "Ohio_WBtrawl_biomass_1992_2018.csv")
+write.csv(Totals2, "data derived/DuFour Ohio_WBtrawl_biomass_1992_2018.csv")
 
 
 ## plot
@@ -488,7 +488,7 @@ Totals_den1 <- aggregate(cbind(ALEWIFG, GSHADG, WHITFISG, SMELT0G, SMELT2G,
                                YPERCH0G, YPERCH2G, WALLEY0G, WALLEY2G, LPERCH0G, LPERCH2G, DARTERG, BSILVERG, GOBY0G, GOBY2G,
                                DRUM0G, DRUM2G, CLUPGRM, SHINGRM, SOFTGRM, SPINGRM, TOTGRM)~YEAR+T_MON,data=Combo2,FUN="mean")
 
-colnames(Totals_den) <- c("YEAR","T_MON","MNALE", "MNGS", "MNWHITF", "MNSMEL", "MNSMEL2", "MNWSUCK",
+colnames(Totals_den1) <- c("YEAR","T_MON","MNALE", "MNGS", "MNWHITF", "MNSMEL", "MNSMEL2", "MNWSUCK",
                       "MNNOTROP", "MNNOTROP2", "MNCHUB", "MNCHUB2", "MNESHIN", "MNESHIN2", "MNSSHIN", "MNSSHIN2",
                       "MNSANDS", "MNBLUNT", "MNFATHED", "MNTPER", "MNTPER2", "MNWPER", "MNWPER2",
                       "MNWBASS", "MNWBASS2", "MNYPER", "MNYPER2", "MNWALL0", "MNWALL2", "MNLPER", "MNLPER2",
@@ -500,11 +500,14 @@ dim(Totals_den1)
 Totals_den1[,c(3:42)]/1000*10000
 
 
-write.csv(Totals_den0, "Ohio_WBtrawl_density_1992_2018.csv")
+write.csv(Totals_den0, "data derived/DuFour Ohio_WBtrawl_density_1992_2018.csv")
 
 
 ## plot
-symbols(Totals_den0$YEAR,-(as.numeric(Totals_den0$T_MON)),circles=Totals_den0$MNTOTAL,inches=0.2, pch=16,fg=gray(0,0.2),bg=gray(0,0.2), yaxt="n",
+symbols(Totals_den0$YEAR,-(as.numeric(Totals_den0$T_MON)),
+        circles=Totals_den0$MNTOTAL,
+        inches=0.2, 
+        pch=16,fg=gray(0,0.2),bg=gray(0,0.2), yaxt="n",
         col.axis="black", col.lab="black",cex.main=1.5,cex.axis=1,xlab="Year",ylab="Month",main="Total kg/hectare")
 axis(2,at=-c(1:5), labels=c("May","June","July","Aug","Fall"),las=2)
 

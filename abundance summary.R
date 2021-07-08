@@ -229,17 +229,17 @@ yearly_abundance_tall <- yearly_abundance_by_agency %>%
   filter(forage_fish == TRUE) %>%        
   select(-total_abundance, -forage_fish)
 
-write_csv(yearly_abundance_tall, here("data", "West Basin absolute abundance tall format.csv"))
+write_csv(yearly_abundance_tall, "data derived/West Basin absolute abundance tall format.csv")
 
 
 # spread data and print - similar to older FTG SAS output
 yearly_abundance_total <- yearly_abundance_tall %>%
   spread(key = spp_agegroup, value = abundance_per_ha) %>%
-  select(year, drum_yoy, em_shiner_adult, em_shiner_yoy, goby_adult, notropis_adult, notropis_yoy, s_chub_adult, s_chub_yoy, sand_shiner_yoy,
+  select(year, drum_yoy, em_shiner_adult, em_shiner_yoy, giz_shad_yoy, goby_adult, notropis_adult, notropis_yoy, s_chub_adult, s_chub_yoy, sand_shiner_yoy,
          smelt_adult, smelt_yoy, spot_shiner_adult, spot_shiner_yoy, troutperch_adult, troutperch_yoy, w_bass_yoy,
          w_perch_yoy, walleye_yoy, y_perch_yoy, clupeid, soft_ray, spiny_ray, all_fish)
 
-write_csv(yearly_abundance_total, here("data", "West Basin absolute abundance.csv"))
+write_csv(yearly_abundance_total, "data derived/West Basin absolute abundance.csv")
 
 
 # write CSV with same but split by state
@@ -258,4 +258,18 @@ yearly_abundance_by_state <- yearly_abundance_by_agency %>%
   select(-total_abundance) %>% #remove this and next line for tall data
   spread(key = spp_agegroup, value = rel_abundance)
 
-write_csv(yearly_abundance_by_state, here("data", "West Basin absolute abundance by agency.csv"))
+write_csv(yearly_abundance_by_state, "data derived/West Basin absolute abundance by agency.csv")
+
+
+### calc percent difference between this years abundance and last 10 years   #####################
+abund_percent_diff <- yearly_abundance_tall %>% 
+  filter(!str_detect(spp_agegroup, "notropis")) %>% # get rid of "notropis" category, we ID fish now 
+  filter(!spp_agegroup %in% c("all_fish", "clupeid", "soft_ray", "spiny_ray")) %>%
+  filter(!spp_agegroup %in% c("s_chub_adult", "s_chub_yoy", "sand_shiner_yoy", "troutperch_yoy", 
+                              "troutperch_adult", "spot_shiner_adult", "spot_shiner_yoy")) %>%
+  group_by(spp_agegroup) %>%
+  summarize(ten_year_mean = mean(abundance_per_ha[which(year %in% seq(this_year-11,this_year-1))]),
+            this_year_abundance = abundance_per_ha[which(year == this_year)],
+            percent_diff = (((this_year_abundance+.0000001)-ten_year_mean)/ten_year_mean)*100) %>% #percentage change from 10 yr mean
+  ungroup()  %>% write.csv("data derived/percent change.csv")
+

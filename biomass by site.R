@@ -2,7 +2,7 @@ source("abs abundance by site.R")
 
 ### Calculate Biomass by site, so we can estimate biomass for species-years   ###########################
 #read Length-weight regression data (need to redo these at some point, who knows how old these are!)
-l_w_reg <- read_excel(here("data", "forlenwt.xls")) %>% janitor::clean_names()
+l_w_reg <- read_excel("data sources/forlenwt.xls") %>% janitor::clean_names()
 
 # total catches by species and age code
 catch_summary_all_spp

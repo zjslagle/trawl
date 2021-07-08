@@ -30,7 +30,7 @@ windowsFonts(Times=windowsFont("Times New Roman"))
 #trawl_database <- odbcConnectAccess2007("//s.dnr.isi.oitfs.ohio.gov/DNRShares/Sandusky Fisheries Research/DuFour/1_Projects/1_Trawling/3_Database/Interagency Trawl XP.mdb")
 
 # work from home:
-trawl_database <- odbcConnectAccess2007("data/Interagency Trawl XP.mdb")
+trawl_database <- odbcConnectAccess2007("data sources/Interagency Trawl XP.mdb")
 
 #list tables in trawl database
 sqlTables(trawl_database)
@@ -46,7 +46,7 @@ odbcCloseAll()
 
 ### Get newer (2020) data - different database with less data   #####################
 
-trawl_database <- odbcConnectAccess2007("data/Trawl Database through 2020.accdb")
+trawl_database <- odbcConnectAccess2007("data sources/Trawl Database through 2020.accdb")
 
 #list tables in trawl database
 sqlTables(trawl_database)
