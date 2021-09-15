@@ -123,3 +123,4 @@ all_lengths <- all_lengths %>% mutate(projcode = case_when(projcode %in% c("LEA-
   filter(year != 1987, effstat == 1, !is.na(effdist)) %>%
   select(-year, -effdist, -effstat) %>%
   arrange(projcode, crn, species, agecode)
+

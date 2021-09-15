@@ -20,7 +20,7 @@ draft_catch_summary %>%
 catch_summary_all_spp %>%
   mutate(depth_strata = case_when(depth > 6 ~ "deep", #called DEPT = 1 in old code
                                 T ~ "shallow"),
-         effdist = effdist * 1852,
+         effdist = effdist * 1852, #convert nautical miles to meters
          totdist = totdist * 1852,
          deploy_dist = totdist - effdist,
          hypot = (depth^2) + (deploy_dist^2),
@@ -55,7 +55,7 @@ catch_summary_all_spp %>%
                                                      year > 2001 ~ 2.4,
                                                      T ~ NA_real_), #must used NA_real_, else we get a matching error
                           agency == "ON" ~ 1.16),
-         wings = case_when(agency == "OH" ~ case_when(year < 2002 ~ 4.83,
+         wings = case_when(agency == "OH" ~ case_when(year < 2002 ~ 4.83, #believe these are in meters
                                                       year > 2001 ~ 5.0,
                                                       T ~ NA_real_),
                            agency == "ON" ~ 5.02),
@@ -69,19 +69,23 @@ catch_summary_all_spp %>%
     summarize(fish_per_area = sum(fish_per_area)) %>%
   ungroup-> catch_summary_all_spp_by_area
 
-catch_summary_all_spp_by_area %<>%
-  select(projcode, year, month, day, agency, state, crn, species, agecode, "fish_per_m2" = fish_per_area, depth_strata, area_swept) %>%
+#tidy up
+catch_summary_all_spp_by_area <- catch_summary_all_spp_by_area %>%
+  mutate(fish_per_ha = fish_per_area *10000) %>%
+  left_join(spp_codes, by = c("species" = "code")) %>%
+  select(projcode, year, month, day, agency, crn, species, common_name, agecode, fish_per_ha) %>%
+  filter(fish_per_ha > 0) %>%
   arrange(year, agency, crn)
 
-write_csv(catch_summary_all_spp_by_area %>% select(-depth_strata, -area_swept, -state), 
-          here("data", "data requests", "3_3_20 absolute abundance by crn_spp_agecode.csv"))
+write_csv(catch_summary_all_spp_by_area, 
+          "data derived/Interagency absolute abundance by crn_spp_agecode.csv")
           
 # similar CSV but for making maps
 catch_summary_all_spp_by_area %>% 
   left_join(spp_codes, by = c("species" = "code")) %>%
   select(-projcode, -depth_strata, -area_swept, -state, -latin_name) %>% 
   left_join(all_effort %>% select(crn, latitude, longitude)) %>%
-  write_csv(here("data", "density by crn.csv"))
+  write_csv(here("data derived/Interagency absolute abundance by crn_spp_agecode lat-lon.csv"))
 
 ### Absolute abundance (per ha) basinwide for ALL species ##################################
 
@@ -112,5 +116,5 @@ yearly_abundance_all_spp %>%
             abundance_per_ha = total_abundance/375320) %>%
   ungroup -> yearly_abundance_all_spp
 
-write_csv(yearly_abundance_all_spp, here("data", "data requests", "3_3_20 SUMMARY absolute abundance by year_spp_agecode ALL SPP.csv"))
+write_csv(yearly_abundance_all_spp, "data derived/data requests/3_3_20 SUMMARY absolute abundance by year_spp_agecode ALL SPP.csv")
 
