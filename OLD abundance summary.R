@@ -1,8 +1,6 @@
-source("read data - 2020 format.R")
+#source("read data - 2020 format.R")
 
-### Abundance summary    ##################################
-# this R code is an attempt to replicate existing SAS code (written by Jeff Tyson?) that takes OH and ON trawl data
-#   and calculates fish species per m^3. 
+### OLD Abundance summary  - for reference only, use 2_cpha and abundance summary.R for actual summaries
 
 # sum over CRN (only summarizes ~10 rows), join effort, filter (not sure if last step is necc)
 draft_catch_summary <- all_catch %>%
@@ -87,7 +85,7 @@ draft_catch_summary %>%
 #error check/examine what we're leaving out. poor sand shiners.
 #also use this code to find new AIS spp summaries (e.g. tubenose)
 draft_catch_summary %>%
-  left_join(spp_codes %>% select(code, common_name), by = c("species" = "code")) %>%
+  left_join(spp_codes %>% select(species, common_name)) %>%
   filter(spp_agegroup == "dont_care") 
 
 #filter only spp-age groups that we care about, sum, then fill in zeros for zero catches

@@ -24,24 +24,9 @@ library(tidyverse)
 this_year = year(now())-1 #get this year
 windowsFonts(Times=windowsFont("Times New Roman"))
 
-
-### Connect to Trawl MSAccess database, download required data  ############################
-#open connection to trawl database
-#trawl_database <- odbcConnectAccess2007("//s.dnr.isi.oitfs.ohio.gov/DNRShares/Sandusky Fisheries Research/DuFour/1_Projects/1_Trawling/3_Database/Interagency Trawl XP.mdb")
-
-# work from home:
-trawl_database <- odbcConnectAccess2007("data sources/Interagency Trawl XP.mdb")
-
-#list tables in trawl database
-sqlTables(trawl_database)
-
-#read in required data from trawl - note that if you don't use as_tibble, sqlFetch() returns an odd
-#     tbl with sqlFetch(trawl_database, "OH Lengths") as the one obs
-spp_codes <- as_tibble(sqlFetch(trawl_database, "1_Interagency Species Codes"))
-
-#close connection to DB
-odbcCloseAll()
-
+#read in species codes/common names and grouping (diff files b/c need to split some age-0 fish into forage groups)
+spp_codes <- read_csv("data sources/spp_codes.csv")
+forage_groups <- read_csv("data sources/forage fish groups.csv")
 
 
 ### Get newer (2020) data - different database with less data   #####################
@@ -83,17 +68,6 @@ all_catch <- all_catch_raw %>%
 all_lengths <- all_lengths_raw %>%
                 mutate(crn = as.character(crn))
 
-
-### reformat species codes ###############################################
-names(spp_codes) %<>% tolower %<>% make.names
-#split "species" into common and latin names
-spp_codes %>%
-  mutate(common_name = trimws(gsub("\\([^()]*\\)", "", species)),
-         latin_name = gsub("(?<=\\()[^()]*(?=\\))(*SKIP)(*F)|.", "", species, perl=T)) %>%
-  select(common_name, latin_name, code = interagency.species.code) %>%
-  mutate(latin_name = case_when(common_name == "Sand shiner" ~ "Notropis stramineus", #fix old latin name
-                                T ~ latin_name))  -> spp_codes
-
 ### Fix errors in each dataset ###########################
 #
 # MAJOR NOTE - ON data does NOT contain uniques CRN's in their crn column. Rather, their "yrsam" appear to be unique crns similar to ours
@@ -112,7 +86,9 @@ all_effort <- all_effort %>% mutate(projcode = case_when(projcode %in% c("LEA-IF
 all_catch <- all_catch %>%
   mutate(projcode = case_when(projcode %in% c("LEA-IF00_001","LEA_IF00-001") ~ "LEA_IF00_001",
                               T ~ projcode)) %>% #fix mismatch between underscores and dashes
-  left_join(all_effort %>% select(projcode, year, agency, yrsam, crn, depth, effdur, effdist, effstat) %>% unique) %>% #THIS MUST BE UNIQUE VALUES
+  left_join(all_effort %>% 
+              select(projcode, year, agency, yrsam, crn, depth, effdur, effdist, effstat) %>% 
+              unique) %>% #THIS MUST BE UNIQUE VALUES
   filter(year != 1987|effstat == 1|!is.na(effdist))
   
 
@@ -124,3 +100,9 @@ all_lengths <- all_lengths %>% mutate(projcode = case_when(projcode %in% c("LEA-
   select(-year, -effdist, -effstat) %>%
   arrange(projcode, crn, species, agecode)
 
+
+
+all_effort %>%
+  group_by(year, crn) %>%
+  tally() %>%
+  filter(n>1)
