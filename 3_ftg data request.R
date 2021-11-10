@@ -39,3 +39,15 @@ catch_per_ha %>%
          "YP_per_ha" = `331_1`, 
          "WAE_per_ha" = `334_1`) %>%
   write_csv("data derived/data requests/Interagency CPHA by site - Hotspot analysis 10-13-21.csv")
+
+### Nov 2021 Biomass by year and spp/ageclass - Hongyan Zhang      ###############################
+source("3_biomass summary.R")
+
+biomass_summary_all_spp_by_area %>%
+  group_by(year, common_name, species, agecode) %>%
+  summarize(total_biomass_mt = sum(total_biomass_mt)) %>%
+  filter(total_biomass_mt > 0) %>%
+  mutate(total_biomass_kg_per_ha = total_biomass_mt*1000/375320) %>% #convert to kg per hectare
+  left_join(spp_codes) %>%
+  select(-total_biomass_mt) %>%
+  write_csv("data derived/data requests/11_9_21 West Basin biomass by year.csv")
