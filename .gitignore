@@ -6,3 +6,6 @@
 *.accdb
 *.csv
 *.xlsx
+data old/*
+figures/*
+data sources/*

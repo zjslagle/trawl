@@ -31,7 +31,7 @@ forage_groups <- read_csv("data sources/forage fish groups.csv")
 
 ### Get newer (2020) data - different database with less data   #####################
 
-trawl_database <- odbcConnectAccess2007("data sources/Trawl Database through 2020.accdb")
+trawl_database <- odbcConnectAccess2007("data sources/Interagency Database 2021.accdb")
 
 #list tables in trawl database
 sqlTables(trawl_database)
@@ -106,3 +106,5 @@ all_effort %>%
   group_by(year, crn) %>%
   tally() %>%
   filter(n>1)
+
+all_effort %>% filter(year == 2021)

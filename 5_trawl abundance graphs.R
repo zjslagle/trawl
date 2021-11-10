@@ -20,16 +20,16 @@ yearly_abundance_tall %>%
     labs(x="", y="Fish/ha")+
     scale_fill_manual(name = "", values = cols, labels = c("Clupeid", "Soft-rayed", "Spiny-rayed"))-> density_by_group
 
-ggsave(plot = density_by_group, here("figures", "fig 2_4_2 West Basin Density by group.png"), 
+ggsave(plot = density_by_group, "figures/fig 2_4_2 West Basin Density by group.png", 
        width = 7, height = 4, units = "in",dpi = 600)
 
 # no biomass graph, haven't converted that SAS code yet - ZJS 2/19/2020
 
 ### Fig 2.4.4 Graph - WAE and YP densities   ##################################
-labs = c(walleye_yoy = "Age-0 Walleye", y_perch_yoy = "Age-0 Yellow Perch")
+labs = c("334_1" = "Age-0 Walleye", "331_1" = "Age-0 Yellow Perch")
 
 yearly_abundance_tall %>%
-  filter(spp_agegroup %in% c("walleye_yoy", "y_perch_yoy")) %>%
+  filter(spp_agegroup %in% c("334_1", "331_1")) %>%
   ggplot(aes(x = year, y = abundance_per_ha))+
     geom_area(position = "stack", color = "black")+
     facet_grid(spp_agegroup ~ ., scales = "free", labeller = labeller(spp_agegroup = labs))+
@@ -41,16 +41,16 @@ yearly_abundance_tall %>%
     scale_y_continuous(expand = c(0,0))+
     labs(x="", y="Fish/ha")
 
-ggsave(here("figures", "fig 2_4_4 rel abundance perch and walleye.png"), 
+ggsave("figures/fig 2_4_4 rel abundance perch and walleye.png", 
        width = 7, height = 4, units = "in",dpi = 600)
 
 
 ### Fig 2.4.5 Graph - Gizzard Shad and White Perch densities   ##################################
 # removed alewife since they haven't been relevant for 20 years
-labs = c(giz_shad_yoy = "Age-0 Gizzard Shad", w_perch_yoy = "Age-0 White Perch")
+labs = c("63_1" = "Age-0 Gizzard Shad", "301_1" = "Age-0 White Perch")
 
 yearly_abundance_tall %>%
-  filter(spp_agegroup %in% c("giz_shad_yoy", "w_perch_yoy")) %>% 
+  filter(spp_agegroup %in% c("63_1", "301_1")) %>% 
   ggplot(aes(x = year, y = abundance_per_ha))+
   geom_area(position = "stack", color = "black")+
   facet_grid(spp_agegroup ~ ., scales = "free", labeller = labeller(spp_agegroup = labs))+
@@ -62,14 +62,14 @@ yearly_abundance_tall %>%
   scale_y_continuous(expand = c(0,0))+
   labs(x="", y="Fish/ha")
 
-ggsave(here("figures", "fig 2_4_5 rel abundance white perch and shad.png"), 
+ggsave("figures/fig 2_4_5 rel abundance white perch and shad.png", 
        width = 7, height = 4, units = "in",dpi = 600)
 
 ### Fig 2.4.6 Graph - All ages of Emerald Shiner densities   ##################################
-labs = c(em_shiner_adult = "Adult Emerald Shiner", em_shiner_yoy = "Age-0 Emerald Shiner")
+labs = c("196_3" = "Adult Emerald Shiner", "196_1" = "Age-0 Emerald Shiner")
 
 yearly_abundance_tall %>%
-  filter(spp_agegroup %in% c("em_shiner_adult", "em_shiner_yoy")) %>% 
+  filter(spp_agegroup %in% c("196_3", "196_1")) %>% 
   ggplot(aes(x = year, y = abundance_per_ha, group = spp_agegroup, fill = spp_agegroup))+
   geom_area(position = "stack", alpha = .7, color = "black", lty = 2)+
   #facet_grid(spp_agegroup ~ ., scales = "free", labeller = labeller(spp_agegroup = labs))+
@@ -82,17 +82,17 @@ yearly_abundance_tall %>%
   scale_y_continuous(expand = c(0,0))+
   labs(x="", y="Fish/ha")+
   scale_fill_manual(labels = labs, 
-                    values = c(em_shiner_adult = "#fc8d59", em_shiner_yoy = "#91bfdb"),
+                    values = c("196_3" = "#fc8d59", "196_1" = "#91bfdb"),
                     name = "")
 
-ggsave(here("figures", "fig 2_4_6 rel abundance emerald shiner.png"), 
+ggsave("figures/fig 2_4_6 rel abundance emerald shiner.png", 
        width = 7, height = 4, units = "in",dpi = 600)
 
 # Graph - Goby and Troutperch
-labs = c(goby_adult = "Round Goby", troutperch_adult = "Adult Troutperch")
+labs = c("366_5" = "Round Goby", "291_3" = "Adult Troutperch")
 
 yearly_abundance_tall %>%
-  filter(spp_agegroup %in% c("goby_adult", "troutperch_adult")) %>%
+  filter(spp_agegroup %in% c("366_5", "291_3")) %>%
   ggplot(aes(x = year, y = abundance_per_ha))+
   geom_area(position = "stack", color = "black")+
   facet_grid(spp_agegroup ~ ., scales = "free", labeller = labeller(spp_agegroup = labs))+
@@ -104,11 +104,12 @@ yearly_abundance_tall %>%
   scale_y_continuous(expand = c(0,0))+
   labs(x="", y="Fish/ha")
 
-ggsave(here("figures", "rel abundance goby and and troutperch.png"), width = 7, height = 5, units = "in",dpi = 600)
+ggsave("figures/rel abundance goby and and troutperch.png", 
+       width = 7, height = 5, units = "in",dpi = 600)
 
 
 ### Abundance graph for any species  #########################
-target_spp = "s_chub_yoy"
+target_spp = "191_3"
 
 yearly_abundance_tall %>%
   filter(spp_agegroup == target_spp) %>%
@@ -131,7 +132,7 @@ ggsave(paste("figures/rel abundance ", target_spp, ".png"),
 
 # turn 2nd line on for top 5 +/- changes
 abund_percent_diff %>%
-  #filter(rank(percent_diff) %in% c(1:5, seq(n(),n()-4))) # get top and bottom five (biggest changes) - turn OFF for All Species
+  filter(rank(percent_diff) %in% c(1:5, seq(n(),n()-4))) %>% # get top and bottom five (biggest changes) - turn OFF for All Species
   ggplot(aes(x = reorder(spp_agegroup, percent_diff), y = percent_diff, fill = percent_diff))+
     geom_col()+
     theme_minimal()+

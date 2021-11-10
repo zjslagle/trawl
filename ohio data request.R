@@ -10,7 +10,7 @@ library(tidyverse)
 
 # NOT THE SAME AS THE INTERAGENCY DB - Ohio has all months, vs Aug-only in Interagency
 #ohio_trawl_database <- odbcConnectAccess2007("//s.dnr.isi.oitfs.ohio.gov/DNRShares/Sandusky Fisheries Research/DuFour/1_Projects/1_Trawling/3_Database/Trawling Database.mdb")
-ohio_trawl_database <- odbcConnectAccess2007("data sources/Trawling Database.mdb")
+ohio_trawl_database <- odbcConnectAccess2007("S:/DuFour/1_Projects/1_Trawl/data/Trawl_Database.mdb")
 
 #list tables in trawl database
 #sqlTables(ohio_trawl_database)
@@ -125,14 +125,15 @@ all_catch %>%
 # filter catch first, have to join effstat != 1 from effort to filter catches
 ohio_only_catch_raw %<>%
   left_join(ohio_only_effort_raw %>% select(projcode, crn, effstat, year) %>% unique) %>%
-  filter(effstat == 1, year != 1987)
+  filter(effstat == 1, year == 2021) %>%
+  left_join(spp_codes)
 
 ohio_only_effort_raw %<>%
-  filter(effstat == 1, year != 1987)
+  filter(effstat == 1, year == 2021)
   
   
-#write_csv(ohio_only_effort_raw, path = here("data", "data requests", "Ohio WB trawl effort RAW DATA.csv"))
-#write_csv(ohio_only_catch_raw, path = here("data", "data requests", "Ohio WB trawl catch RAW DATA.csv"))
+write_csv(ohio_only_effort_raw, "data derived/data requests/2021 Ohio WB trawl effort.csv")
+write_csv(ohio_only_catch_raw, "data derived/data requests/2021 Ohio WB trawl catch.csv")
 
 ### OSU Museum data    #############################################
 ohio_only_catch_raw %>%

@@ -170,15 +170,15 @@ write_csv(yearly_abundance_by_state, "data derived/West Basin absolute abundance
 
 
 ### calc percent difference between this years abundance and last 10 years   #####################
-#abund_percent_diff <- 
-yearly_abundance_tall %>%
+abund_percent_diff <- yearly_abundance_tall %>%
   filter(!spp_agegroup %in% c("all_forage", "clupeid", "soft_ray", "spiny_ray")) %>%
   filter(!spp_agegroup %in% c("291_1", "291_3", "291_1", 
                               "291_3", "201_1", "201_3")) %>%
   group_by(spp_agegroup) %>%
-  summarize(ten_year_mean = mean(abundance_per_ha[which(year %in% seq(this_year-11,this_year-1))]),
-            this_year_abundance = abundance_per_ha[which(year == this_year)],
-            percent_diff = (((this_year_abundance+.0000001)-ten_year_mean)/ten_year_mean)*100) %>% #percentage change from 10 yr mean
-  ungroup()  %>% 
-  write_csv("data derived/percent change.csv")
+  summarize(ten_year_mean = mean(abundance_per_ha[which(year %in% seq(this_year-11,this_year-1))])+.001,
+            this_year_abundance = abundance_per_ha[which(year == this_year)]+.001,
+            percent_diff = ((((this_year_abundance+.0000001)-ten_year_mean)/ten_year_mean)*100)) %>% #percentage change from 10 yr mean
+  ungroup()
+
+write_csv(abund_percent_diff, "data derived/percent change.csv")
 

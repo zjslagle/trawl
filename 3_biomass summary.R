@@ -164,18 +164,26 @@ yearly_biomass_by_agency <- biomass_summary_by_site %>%
                                                                   depth_strata == "all_depths" ~ mean_biomass_g * 1.4121e+09),
                                      country == "US" ~ case_when(depth_strata == "shallow" ~ mean_biomass_g * 9.281E+8,
                                                                  depth_strata == "deep" ~ mean_biomass_g * 1.413E+9))) %>%
-  select(-mean_biomass_g)
+  select(-mean_biomass_g)                                 # basinwide area = 3.7532e+09 m2
 
 #sum across lake and state
-biomass_summary_all_spp_by_area <- yearly_biomass_by_agency %>%
+biomass_summary_all_spp <- yearly_biomass_by_agency %>%
   group_by(year, country, species, agecode) %>%
     summarize(total_biomass_mt = sum(total_biomass_g)/1000000) %>% #convert to metric tons
   arrange(country, year) %>%
   left_join(spp_codes %>% select(-latin_name)) %>%
   left_join(forage_groups)
 
+
+biomass_summary_groups <- biomass_summary_all_spp %>%
+  group_by(year, group) %>%
+  summarize(total_biomass_mt = sum(total_biomass_mt)) %>%
+  ungroup() %>%
+  filter(!is.na(group))
+
+### Output biomass into older formats   ########################################
 # reshape into older format - forage groups by country in wide format
-biomass_summary_all_spp_by_area %>%
+biomass_summary_all_spp %>%
   group_by(year, country, group) %>%
     summarize(total_biomass_mt = sum(total_biomass_mt)) %>%
   ungroup() %>%
@@ -187,7 +195,7 @@ biomass_summary_all_spp_by_area %>%
   write_csv("data derived/West Basin biomass estimates by agency.csv")
 
 # reshape into older format - forage groups Total/Basinwide in wide format
-biomass_summary_all_spp_by_area %>%
+biomass_summary_all_spp %>%
   group_by(year, group) %>%
   summarize(total_biomass_mt = sum(total_biomass_mt)) %>%
   ungroup() %>%
@@ -197,3 +205,5 @@ biomass_summary_all_spp_by_area %>%
   mutate(total = clupeid + soft_ray + spiny_ray) %>%
   arrange(year) %>%
   write_csv("data derived/West Basin biomass estimates Basinwide.csv")
+
+

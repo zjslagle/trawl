@@ -51,3 +51,9 @@ biomass_summary_all_spp_by_area %>%
   left_join(spp_codes) %>%
   select(-total_biomass_mt) %>%
   write_csv("data derived/data requests/11_9_21 West Basin biomass by year.csv")
+
+
+catch_per_area %>%
+  filter(species == 334, agecode == 4, year > 1994) %>%
+  group_by(year) %>%
+  summarize(total_catch = sum(sum_catch)) %>% view
