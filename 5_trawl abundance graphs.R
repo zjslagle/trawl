@@ -1,5 +1,5 @@
 
-source("abundance summary.R")
+source("2_cpha and abundance summary.R")
 
 # Figures for FTG report and meeting presentation
 
@@ -18,12 +18,11 @@ yearly_abundance_tall %>%
     scale_x_continuous(expand = c(0,0), breaks = seq(1988,this_year,by=5))+
     scale_y_continuous(expand = c(0,0))+
     labs(x="", y="Fish/ha")+
-    scale_fill_manual(name = "", values = cols, labels = c("Clupeid", "Soft-rayed", "Spiny-rayed"))-> density_by_group
+    scale_fill_manual(name = "", values = cols, labels = c("Clupeid", "Spiny-rayed", "Soft-rayed"))-> density_by_group
 
 ggsave(plot = density_by_group, "figures/fig 2_4_2 West Basin Density by group.png", 
        width = 7, height = 4, units = "in",dpi = 600)
 
-# no biomass graph, haven't converted that SAS code yet - ZJS 2/19/2020
 
 ### Fig 2.4.4 Graph - WAE and YP densities   ##################################
 labs = c("334_1" = "Age-0 Walleye", "331_1" = "Age-0 Yellow Perch")
@@ -109,7 +108,7 @@ ggsave("figures/rel abundance goby and and troutperch.png",
 
 
 ### Abundance graph for any species  #########################
-target_spp = "191_3"
+target_spp = "191_1"
 
 yearly_abundance_tall %>%
   filter(spp_agegroup == target_spp) %>%
@@ -121,7 +120,8 @@ yearly_abundance_tall %>%
         strip.background = element_rect(fill = "white", color = "black"), strip.text = element_text(face = "bold", size = 12)) +
   scale_x_continuous(expand = c(0,.5), breaks = seq(1988,this_year,by=5))+
   scale_y_continuous(expand = c(0,0))+
-  labs(x = "", y = "Fish/ha", title = paste(target_spp, "relative abundance over time, West Basin Lake Erie"),
+  labs(x = "", y = "Fish/ha", 
+       title = paste(target_spp, "relative abundance over time, West Basin Lake Erie"),
        subtitle = "Source: interagency (OMNRF & ODNR) trawl data, 1988 - present")
 
 ggsave(paste("figures/rel abundance ", target_spp, ".png"), 
@@ -136,7 +136,8 @@ abund_percent_diff %>%
   ggplot(aes(x = reorder(spp_agegroup, percent_diff), y = percent_diff, fill = percent_diff))+
     geom_col()+
     theme_minimal()+
-    labs(y = paste("% difference: ", this_year, "- 10 yr mean"))+
+    labs(y = paste("% difference: ", this_year, "- 10 yr mean"),
+         title = paste("Percent difference from", this_year, "vs 10 year mean"))+
     scale_fill_distiller(type = "div", palette = "RdBu", direction = 1)+
     scale_y_continuous(limits = c(-100, max(abund_percent_diff$percent_diff)), 
                        breaks = c(-100, 0, 200, 400, 600, 800, 1000, 1200, 1400), 
@@ -147,7 +148,7 @@ abund_percent_diff %>%
           panel.background = element_blank(), text = element_text(family = "Times"),
           strip.background = element_rect(fill = "white", color = "black"))
 
-ggsave(here("figures", "percent difference - all species.png"), width = 7, height = 5, units = "in",dpi = 600)
+ggsave("figures/percent difference - all species.png", width = 7, height = 5, units = "in",dpi = 600)
 
 
 # Log scale (only for increases, log(negative number) is undefined)
