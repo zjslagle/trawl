@@ -2,7 +2,7 @@
 #     Summary of West Basin trawl data - Ohio and Ontario, years 1987 - present
 #       for Forage TG reporting 
 #
-#     Much of the processing is based on SAS code written by Jeff Tyson (I think)
+#     Much of the summarization code is based on SAS code written by Jeff Tyson (I think)
 #     This code written by Zak Slagle, ODNR-SARE, Started November 2018
 #     This particular code written Jan 2021 to read in data from an old database (Interagency Trawl XP)
 #     that has species data and a new format database that has OH and ON combine (Trawl Database through 2020,
@@ -10,15 +10,19 @@
 
 
 ### Load libraries   ##################################
+options(warn = -1) # remove unhelpful warnings about libraries being built under old R version
+
 library(magrittr)
 library(forcats)
 require(RODBC)
 require(lubridate)
 require(stringr)
-require(here)
+#require(here)
 #require(xlsx)
 require(readxl)
 library(tidyverse)
+
+options(warn = 0) #warnings back on
 
 
 this_year = year(now())-1 #get this year

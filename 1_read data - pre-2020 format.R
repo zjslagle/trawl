@@ -4,7 +4,8 @@
 #
 #     Much of the processing is based on SAS code written by Jeff Tyson (I think)
 #     This code written by Zak Slagle, ODNR-SARE, Started November 2018
-#yet another test for github
+
+# This older code reads in interagency data when OH and ON aren't already combined.
 
 ### Load libraries   ##################################
 library(magrittr)

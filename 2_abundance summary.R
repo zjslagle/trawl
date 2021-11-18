@@ -1,10 +1,13 @@
 source("1_read data - 2020 format.R")
 
 
-### Abundance summary    ##################################
+### Abundance Summary    ##################################
 # this R code is an attempt to replicate existing SAS code (written by Jeff Tyson) 
-# that takes OH and ON trawl data, calc's fish
+# that takes OH and ON trawl data, calc's fish numbers, and extrapolates up to basinwide
+# estimates.
 
+
+### Create Catch Summary   #############################################################
 # sum over CRN (only summarizes ~10 rows), join effort, filter out bad trawls
 draft_catch_summary <- all_catch %>%
   group_by(projcode, year, agency, yrsam, crn, species, agecode) %>% 
@@ -31,10 +34,12 @@ catch_summary <- catch_summary %>%
               select(projcode, year, agency, yrsam, crn, depth, effdist)) %>%
   arrange(year, crn, projcode)
 
-### OLD SAS NOTE - Calc Vol sampled and catch/meter^2 for each spp-age with Fishing Power Correction (FPC) applied   ##################################
+# OLD SAS NOTE - Calc Vol sampled and catch/meter^2 for each spp-age with Fishing Power Correction (FPC) applied   ##################################
 
+### Apply Fishing Power Corrections and calculate abundance per area   ###################################
 #Use  nested case_when calls to find cases of Ohio trawl prior to 2002 and applying one
-# fishing correction to them, then finding Ohio trawls 2002-present and applying another. 
+# fishing correction to them, then finding Ohio trawls 2002-present and applying another. We are
+# adjusting 2 diff OH vessels to the fishing power of Ontario's vessel
  
 catch_per_area <- catch_summary %>%
   mutate(depth_strata = case_when(depth > 6 ~ "deep", #called DEPT = 1 in old code
@@ -100,7 +105,7 @@ catch_summary_by_site <- catch_per_area %>%
   bind_rows(fish_group_summary) %>%
   arrange(yrsam)
 
-### Continue with absolute abundance summary   #############################################
+### Extrapolate abundance per area up to basinwide estimates   #############################################
 # Average catch/m2 over year, agency, depth strata, and spp_agegroup
 yearly_abundance_by_agency <- catch_summary_by_site %>%
   group_by(year, agency, depth_strata, spp_agegroup) %>%
@@ -128,14 +133,12 @@ yearly_abundance_tall <- yearly_abundance_by_agency %>%
   summarize(total_abundance = sum(total_abundance),
             abundance_per_ha = total_abundance/375320) %>%
   ungroup %>% 
-  mutate(forage_fish = case_when(spp_agegroup %in% c("61_1", "61_3", "63_1", "196_1", "196_3", "201_1", 
-                                                     "201_3", "180_1", "180_3", "204_1", "204_3", "206_1", 
-                                                     "206_3", "191_1", "191_3", "121_1", "121_3", "291_1", 
-                                                     "291_3", "366_5","301_1", "302_1", "331_1", "334_1", 
-                                                     "371_1", "clupeid", "soft_ray", "spiny_ray", "all_forage") ~ TRUE,
-                                 T ~ FALSE)) %>%
-  filter(forage_fish == TRUE) %>%        
-  select(-total_abundance, -forage_fish)
+  filter(spp_agegroup %in% c("61_1", "61_3", "63_1", "196_1", "196_3", "201_1", # filter "forage fish" only
+                             "201_3", "180_1", "180_3", "204_1", "204_3", "206_1",
+                             "206_3", "191_1", "191_3", "121_1", "121_3", "291_1",
+                             "291_3", "366_5","301_1", "302_1", "331_1", "334_1",
+                             "371_1", "clupeid", "soft_ray", "spiny_ray", "all_forage")) %>%
+  select(-total_abundance)
 
 write_csv(yearly_abundance_tall, "data derived/West Basin absolute abundance tall format.csv")
 
@@ -155,14 +158,12 @@ yearly_abundance_by_state <- yearly_abundance_by_agency %>%
   group_by(year, agency, spp_agegroup) %>%
   summarize(total_abundance = sum(total_abundance),
             abundance_per_ha = total_abundance/375320) %>%
-  ungroup %>%
-  mutate(forage_fish = case_when(spp_agegroup %in% c("61_1", "61_3", "63_1", "196_1", "196_3", "201_1", 
-                                                     "201_3", "180_1", "180_3", "204_1", "204_3", "206_1", 
-                                                     "206_3", "191_1", "191_3", "121_1", "121_3", "291_1", 
-                                                     "291_3", "366_5","301_1", "302_1", "331_1", "334_1", 
-                                                     "371_1", "clupeid", "soft_ray", "spiny_ray", "all_forage") ~ TRUE,
-                                 T ~ FALSE)) %>%
-  filter(forage_fish == TRUE) %>%        
+  ungroup %>% 
+  filter(spp_agegroup %in% c("61_1", "61_3", "63_1", "196_1", "196_3", "201_1",
+                             "201_3", "180_1", "180_3", "204_1", "204_3", "206_1",
+                             "206_3", "191_1", "191_3", "121_1", "121_3", "291_1",
+                             "291_3", "366_5","301_1", "302_1", "331_1", "334_1",
+                             "371_1", "clupeid", "soft_ray", "spiny_ray", "all_forage")) %>%      
   select(-total_abundance) %>% #remove this and next line for tall data
   spread(key = spp_agegroup, value = abundance_per_ha)
 

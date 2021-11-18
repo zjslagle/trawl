@@ -1,4 +1,4 @@
-source("2_cpha and abundance summary.R")
+source("2_abundance summary.R")
 
 ### Biomass estimates for Interagency trawl - by site and entire basin   ############################
 # This code reproduces SAS code originally written by Jeff Tyson for Forage Task Group summaries. Unfortunately,

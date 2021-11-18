@@ -5,10 +5,9 @@ library(sf)
 library(tmap)
 library(stringr)
 
-source("Read Trawl Data.R")
+source("1_read data - 2020 format.R")
 
-map_folder = "C:/Users/zakjs/Documents/Ohio DoW/Maps/"
-# office map folder: "C:/Users/slaglez/Documents/Maps/"
+map_folder = "C:/Users/10173930/Documents/maps/shapefiles/"
 
 #read in shapefiles
 states = st_read(paste(map_folder, "ne_10m_admin_1_states_provinces.shp", sep = ""))
@@ -29,10 +28,11 @@ urban_areas <- st_intersection(urban_areas, big_bounds)
 ### Count this year's trawl sites, make shapefile for them   ###########################
 #count trawl sites, count # of low DO sites
 all_effort %>%
-  filter(year == this_year) %>%
+  filter(year == this_year) %>% # filter(is.na(botoxy < 2)) %>% select(crn, botoxy)
   summarize(trawl_sites = n(),
             good_trawl_sites = sum(effstat == 1),
-            low_do_sites = sum(botoxy < 2))
+            low_do_sites = sum(botoxy < 2, na.rm = T),
+            missing_do_sites = sum(is.na(botoxy)))
 
 #make a simple feature for sites
 all_effort %>%

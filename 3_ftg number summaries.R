@@ -1,5 +1,5 @@
 
-source("2_cpha and abundance summary.R")
+source("2_abundance summary.R")
 
 # Numeric summaries for FTG report and meeting presentation - compliments "ftg graphs.R"
 
@@ -18,8 +18,9 @@ do_summary %>% tail
 
 do_summary %>%
   ggplot(aes(x = year, y = percent_low_do))+
-    geom_line(size = 2)+
-    labs(x = "Year", y = "Percent of trawl sites", title = "Trawl sites affected by Anoxic Conditions",
+    geom_area()+
+    labs(x = "Year", y = "Percent of trawl sites", 
+         title = "Trawl sites affected by Anoxic Conditions",
          subtitle = "Interagency trawl in the West Basin of Lake Erie, August trawls")+
     theme_minimal()
 
