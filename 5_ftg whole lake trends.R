@@ -34,11 +34,11 @@ forage %>%
   summarize(total_years = sum(!is.na((abundance_per_ha))))
 
 # do EB trawls correlate? NOPE
-forage %>%
-  filter(basin %in% c("EB", "LPB")) %>%
+eb_data_comp <- forage %>%
+  filter(basin %in% c("EB", "LPB")) %>% 
   mutate(abundance_per_ha = abundance_per_ha+.001) %>%
   spread(key = agency, value = abundance_per_ha) %>%
-  filter(!is.na(NY)) -> eb_data_comp
+  filter(!is.na(NY))
 
 eb_data_comp %>%
   ggplot(aes(x = NY, y = ON))+
@@ -51,8 +51,8 @@ eb_data_comp %>%
 
 #because of this, plot NY and ON LPB surveys separate 
 
-
-
+# Trim data - remove MI (sorry Jan) and years before 2000
+forage <- forage %>% filter(year > 1999, agency != "MI")
 
 ### Abundance Plots by Species  ######################
 
@@ -77,16 +77,28 @@ inverse_theme <- function(){theme_transparent()+
           strip.text = element_text(size = 18, color = "white"),
           axis.text = element_text(color = "white"))}
 
-# colors for different basins - trying to fine tune so they are most visibile/distinguishable 
+### PreLEC/LEC - West Basin Abundance by forage group  #####################
+source("4_abundance graphs.R")
+density_by_group+
+  inverse_theme()+
+  geom_area(position = "stack", color = "white")+
+  theme(plot.background = element_rect(fill = "#003D73"))
+
+ggsave("figures/whole lake/abundance - WB by group.png", 
+       width = 10, height = 6.5, units = "in",dpi = 600)
+
+# colors for different basins - trying to fine tune so they are most visible/distinguishable 
 # and don't look like shit
 test_colors <- c("#51C1AB", "#FFD56B", "#6371C9", "#FFA56B")
 new_colors <- c("#68affc", "#ff864a", "#fffa66", "white")
 colors <- new_colors
 line_types = c(1, 2, 1, 95) #line types across all line graphs
 
+scales::show_col(new_colors)
+
 # Smelt YOY
 forage %>%
-  filter(species == "Rainbow Smelt" & age_class == "YOY" & !is.na(abundance_per_ha) & agency != "MI") %>%
+  filter(species == "Rainbow Smelt" & age_class == "YOY" & !is.na(abundance_per_ha)) %>%
   group_by(year, basin) %>%
   summarize(mean_abundance = mean(abundance_per_ha)) %>%
   ungroup %>%
@@ -101,12 +113,13 @@ forage %>%
   inverse_theme()-> smelt_yoy
 
 
-ggsave(plot = smelt_yoy, "figures/whole lake/abundance - smelt YOY.png", width = 10, height = 6.5, units = "in",dpi = 600)
+ggsave(plot = smelt_yoy, "figures/whole lake/abundance - smelt YOY.png", 
+       width = 10, height = 6.5, units = "in",dpi = 600)
 
 
 # Smelt adult
 forage %>%
-  filter(species == "Rainbow Smelt" & age_class == "YAO" & !is.na(abundance_per_ha) & agency != "MI") %>%
+  filter(species == "Rainbow Smelt" & age_class == "YAO" & !is.na(abundance_per_ha)) %>%
   group_by(year, basin) %>%
   summarize(mean_abundance = mean(abundance_per_ha)) %>%
   ungroup %>%
@@ -125,7 +138,7 @@ ggsave(plot = smelt_adult, "figures/whole lake/abundance - smelt adult.png", wid
 
 # Shiner TOTAL
 forage %>%
-  filter(species == "Emerald Shiner" & !is.na(abundance_per_ha) & agency != "MI") %>%
+  filter(species == "Emerald Shiner" & !is.na(abundance_per_ha)) %>%
   group_by(year, basin) %>%
   summarize(mean_abundance = mean(abundance_per_ha)) %>%
   ungroup %>%
@@ -144,7 +157,7 @@ ggsave(plot = shiner, "figures/whole lake/abundance - shiner ALL AGES.png", widt
 
 # Shad YOY
 forage %>%
-  filter(species == "Gizzard Shad" & age_class == "YOY" & !is.na(abundance_per_ha) & agency != "MI") %>%
+  filter(species == "Gizzard Shad" & age_class == "YOY" & !is.na(abundance_per_ha)) %>%
   group_by(year, basin) %>%
   summarize(mean_abundance = mean(abundance_per_ha)) %>%
   ungroup %>%
@@ -184,7 +197,7 @@ ggsave(plot = goby_all, "figures/whole lake/abundance - goby all.png", width = 1
 
 #calc percentile rank within basin 
 forage %>%
-  filter(!is.na(abundance_per_ha) & agency != "MI") %>%
+  filter(!is.na(abundance_per_ha)) %>%
   mutate(age_class = if_else(species == "Emerald Shiner", #group all ages of shiner together
                              "all ages",
                              age_class)) %>%
@@ -201,7 +214,7 @@ forage %>%
 
 # Smelt YOY
 forage_ranked %>%
-  filter(species == "Rainbow Smelt" & age_class == "YOY" & !is.na(mean_abundance) & year > 1999) %>%
+  filter(species == "Rainbow Smelt" & age_class == "YOY" & !is.na(mean_abundance)) %>%
   mutate(basin = fct_relevel(basin, "WB", "CB", "EB", "LPB")) %>%
   ggplot(aes(x = year, y = over_under_rank, fill = basin))+
   geom_col(position = "dodge")+
@@ -224,7 +237,7 @@ ggsave(plot = smelt_yoy_percent, "figures/whole lake/percentile - smelt YOY.png"
 
 # Smelt adult
 forage_ranked %>%
-  filter(species == "Rainbow Smelt" & age_class == "YAO" & !is.na(mean_abundance) & year > 1999) %>%
+  filter(species == "Rainbow Smelt" & age_class == "YAO" & !is.na(mean_abundance)) %>%
   mutate(basin = fct_relevel(basin, "WB", "CB", "EB", "LPB")) %>%
   ggplot(aes(x = year, y = over_under_rank, fill = basin))+
   geom_col(position = "dodge")+
@@ -244,7 +257,7 @@ ggsave(plot = smelt_adult_percent, "figures/whole lake/percentile - smelt adult.
 
 # shiner All Ages
 forage_ranked %>%
-  filter(species == "Emerald Shiner" & !is.na(mean_abundance) & year > 1999) %>%
+  filter(species == "Emerald Shiner" & !is.na(mean_abundance)) %>%
   mutate(basin = fct_relevel(basin, "WB", "CB", "EB", "LPB")) %>%
   ggplot(aes(x = year, y = over_under_rank, fill = basin))+
   geom_col(position = "dodge")+
@@ -265,7 +278,7 @@ ggsave(plot = shiner_percent, "figures/whole lake/percentile - shiner ALL AGES.p
 
 # shad YOY
 forage_ranked %>%
-  filter(species == "Gizzard Shad" & age_class == "YOY" & !is.na(mean_abundance) & year > 1999) %>%
+  filter(species == "Gizzard Shad" & age_class == "YOY" & !is.na(mean_abundance)) %>%
   mutate(basin = fct_relevel(basin, "WB", "CB", "EB", "LPB")) %>%
   ggplot(aes(x = year, y = over_under_rank, fill = basin))+
   geom_col(position = "dodge")+
@@ -285,7 +298,7 @@ ggsave(plot = shad_yoy_percent, "figures/whole lake/percentile - shad YOY.png", 
 
 # Goby all
 forage_ranked %>%
-  filter(species == "Round Goby" & !is.na(mean_abundance) & year > 1999) %>%
+  filter(species == "Round Goby" & !is.na(mean_abundance)) %>%
   mutate(basin = fct_relevel(basin, "WB", "CB", "EB", "LPB")) %>%
   ggplot(aes(x = year, y = over_under_rank, fill = basin))+
   geom_col(position = "dodge")+
@@ -338,7 +351,7 @@ total_forage_all_basins <- total_forage %>%
             nudge_y = -3)+
   scale_x_continuous(expand = c(0,.5), 
                      breaks = seq(1990, this_year, by=5), 
-                     limits = c(1990, this_year))+
+                     limits = c(2000, this_year))+
   scale_y_continuous(expand = c(0,0),                     # MUST ADJUST THIS if forage numbers get big!
                      limits = c(0, 9000))+ 
   scale_color_manual("Basin", values = c("#51C1AB", "#FFD56B", "#6371C9"))+
@@ -355,7 +368,7 @@ ggsave(plot = total_forage_all_basins,
 sole_graph <- total_forage_all_basins+
   scale_x_continuous(expand = c(0,.5), 
                      breaks = 2016:2020, 
-                     limits = c(2016, 2020))
+                     limits = c(2016, 2021))
 
 sole_graph
 

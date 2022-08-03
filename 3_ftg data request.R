@@ -1,6 +1,6 @@
 
 source("2_abundance summary.R")
-source("2_biomass summary.R")
+source("3_biomass summary.R")
 require(xlsx)
 
 # write all_tibbles to excel workbook
@@ -14,15 +14,26 @@ write_excel_csv(all_catch %>%
                 file = "data derived/West Basin interagency trawl catch data.csv")
 
 # lengths too long for xls
-write_csv(all_lengths, path = "data derived/data requests/Interagency WB trawl lengths data request.csv")
-write_csv(spp_codes, path = "data derived/spp_codes.csv")
+write_csv(all_lengths %>% 
+            left_join(all_effort %>% select(crn, yrsam, year)) %>%
+            left_join(spp_codes) %>%
+            select(year, common_name, species, agecode, length) %>%
+            arrange(year, species, agecode), 
+          file = "data derived/data requests/Interagency WB trawl lengths data request.csv")
+write_csv(spp_codes, file = "data derived/spp_codes.csv")
 
-write_excel_csv()
-
+### White Bass catch by site - Jackson work   #########################
+all_catch %>%
+  select(yrsam, year, crn, species, agecode, catch) %>%
+  complete(nesting(yrsam, year, crn), 
+           nesting(species, agecode), fill = list(catch = 0)) %>%
+  left_join(all_effort %>% select(yrsam, year, effstat, crn, agency)) %>%
+  filter(species == 302, agecode == 1, effstat == 1, year > 1987) %>% 
+  write_csv("data derived/interagency 302_1 catches.csv")
 
 ### FTG - species-specific catches   #########################
 all_catch %>%
-  left_join(spp_codes, by = c("species" = "code")) %>%
+  left_join(spp_codes) %>%
   arrange(year, agency) %>%
   filter(common_name == "Tubenose goby") %>% view
 
@@ -42,19 +53,15 @@ catch_per_ha %>%
   write_csv("data derived/data requests/Interagency CPHA by site - Hotspot analysis 10-13-21.csv")
 
 ### Nov 2021 Biomass by year and spp/ageclass - Hongyan Zhang      ###############################
-source("3_biomass summary.R")
 
-biomass_summary_all_spp_by_area %>%
+biomass_summary_all_spp %>%
   group_by(year, common_name, species, agecode) %>%
   summarize(total_biomass_mt = sum(total_biomass_mt)) %>%
   filter(total_biomass_mt > 0) %>%
   mutate(total_biomass_kg_per_ha = total_biomass_mt*1000/375320) %>% #convert to kg per hectare
-  left_join(spp_codes) %>%
   select(-total_biomass_mt) %>%
-  write_csv("data derived/data requests/11_9_21 West Basin biomass by year.csv")
+  write_csv("data derived/data requests/1_3_22 West Basin biomass by year.csv")
 
-
-catch_per_area %>%
-  filter(species == 334, agecode == 4, year > 1994) %>%
-  group_by(year) %>%
-  summarize(total_catch = sum(sum_catch)) %>% view
+### Forage length data  ###########################
+all_lengths %>%
+  write_csv("data derived/data requests/1_11_22 West Basin forage fish lengths.csv")

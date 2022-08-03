@@ -1,22 +1,23 @@
 source("1_read data - 2020 format.R")
 
 
-### Abundance Summary    ##################################
+ ### Abundance Summary    ##################################
 # this R code is an attempt to replicate existing SAS code (written by Jeff Tyson) 
 # that takes OH and ON trawl data, calc's fish numbers, and extrapolates up to basinwide
 # estimates.
-
+ 
+# all_effort %<>% filter(!(year == 2021 & crn == 253))  #outlier site from 2021
 
 ### Create Catch Summary   #############################################################
 # sum over CRN (only summarizes ~10 rows), join effort, filter out bad trawls
 draft_catch_summary <- all_catch %>%
   group_by(projcode, year, agency, yrsam, crn, species, agecode) %>% 
-  summarize(sum_catch = sum(catch)) %>% ungroup() %>%
+  summarize(sum_catch = sum(catch)) %>% 
+  ungroup() %>% 
   left_join(all_effort %>% 
               select(projcode, year, agency, yrsam, crn, depth, effdur, effdist, effstat, totdist, longitude, latitude)) %>%
-  arrange(year, crn, projcode) %>%
+  arrange(year, crn, projcode) %>% 
   filter(effstat == 1, year != 1987, !is.na(effdist)) #last part filters out one site in '93
-
 
 #filter only spp-age groups that we care about, sum, then add explicit zero catches
 catch_summary <- draft_catch_summary %>%
@@ -31,7 +32,7 @@ catch_summary <- draft_catch_summary %>%
 #join in effort stats
 catch_summary <- catch_summary %>%
   left_join(all_effort %>% 
-              select(projcode, year, agency, yrsam, crn, depth, effdist)) %>%
+              select(projcode, year, agency, yrsam, crn, depth, effdist, longitude)) %>%
   arrange(year, crn, projcode)
 
 # OLD SAS NOTE - Calc Vol sampled and catch/meter^2 for each spp-age with Fishing Power Correction (FPC) applied   ##################################
@@ -39,7 +40,7 @@ catch_summary <- catch_summary %>%
 ### Apply Fishing Power Corrections and calculate abundance per area   ###################################
 #Use  nested case_when calls to find cases of Ohio trawl prior to 2002 and applying one
 # fishing correction to them, then finding Ohio trawls 2002-present and applying another. We are
-# adjusting 2 diff OH vessels to the fishing power of Ontario's vessel
+# adjusting 2 diff OH vessels (RVs Explorer/Gibraltar and Explorer II) to the fishing power of Ontario's vessel (R/V Keenosay)
  
 catch_per_area <- catch_summary %>%
   mutate(depth_strata = case_when(depth > 6 ~ "deep", #called DEPT = 1 in old code
@@ -49,6 +50,9 @@ catch_per_area <- catch_summary %>%
                                                       year > 2001 ~ 5.0,
                                                       T ~ NA_real_),#must use NA_real_, else we get a matching error
                            agency == "ON" ~ 5.02),
+         state = case_when((agency == "ON" & longitude > -83.2900) ~ "ON", # setting Michigan sites to state = OH; these are OMNRF-fished sites in US/OH strata
+                           agency == "ON" ~ "OH",
+                           T ~ "OH"),
          area_swept = effdist * wings,
          fish_per_area = sum_catch/area_swept) %>% #catch per m^2
   #apply Fishing Power Corrections (see Tyson et al. 2006)
@@ -59,7 +63,8 @@ catch_per_area <- catch_summary %>%
                                                               spp_agegroup == "331_3"  ~ fish_per_area*1.185,
                                                               spp_agegroup == "334_1"  ~ fish_per_area*1.520,
                                                               spp_agegroup == "371_3"  ~ fish_per_area*1.505,
-                                                             T ~ fish_per_area), #now OH 2002 - present:
+                                                             T ~ fish_per_area), 
+                                   #now OH 2002 - present:
                         (agency == "OH" & year > 2001) ~ case_when(spp_agegroup == "63_1"   ~ fish_per_area*2.362,
                                                              spp_agegroup == "196_1"  ~ fish_per_area*1.494,
                                                              spp_agegroup == "196_3"  ~ fish_per_area*1.494,
@@ -78,12 +83,27 @@ catch_per_area <- catch_summary %>%
 #       Intercalibration of Research Survey Vessels on Lake Erie. 
 #       North Am. J. Fish. Manag. 26, 559–570. https://doi.org/10.1577/m05-027.1
 
-catch_per_area %>%
-  group_by(year, yrsam, crn, agency, depth_strata, spp_agegroup) %>%
+cpha_by_site <- catch_per_area %>%
+  group_by(year, yrsam, crn, agency, depth_strata, spp_agegroup, species, agecode) %>%
   summarize(cpha = sum(fish_per_area)*10000) %>% #convert meters^2 to hectares
-  ungroup %>%
-write_csv("data derived/Interagency CPHA by site.csv")
+  ungroup
 
+#doublecheck that we didn't lose a bunch of sites somehow!
+cpha_by_site %>% 
+  select(year, agency, yrsam) %>% unique %>% 
+  xtabs(~year+agency, data = .)
+
+#write to CSV
+cpha_by_site %>%
+  write_csv("data derived/Interagency CPHA by site.csv")
+
+# quick Age-0 walleye (or whatever) graph
+cpha_by_site %>%
+  group_by(year, spp_agegroup) %>%
+  summarize(mean_cpha = mean(cpha)) %>%
+  filter(spp_agegroup == "334_1") %>%
+  ggplot(aes(x = year, y = mean_cpha))+
+    geom_col()
 
 ### Create functional groupings (spiny-rayed, clupeid, soft-rayed, and total) in new tibble   ################
 fish_group_summary <- catch_per_area %>%
@@ -108,7 +128,7 @@ catch_summary_by_site <- catch_per_area %>%
 ### Extrapolate abundance per area up to basinwide estimates   #############################################
 # Average catch/m2 over year, agency, depth strata, and spp_agegroup
 yearly_abundance_by_agency <- catch_summary_by_site %>%
-  group_by(year, agency, depth_strata, spp_agegroup) %>%
+  group_by(year, agency, depth_strata, spp_agegroup, species, agecode) %>%
   summarize(mean_fish = mean(fish_per_area),
             sd_fish = sd(fish_per_area)) %>%
   ungroup
@@ -129,10 +149,11 @@ yearly_abundance_by_agency <- yearly_abundance_by_agency %>%
 # Average catch/m2 over year, agency, depth strata, and spp_agegroup; first, filter out only "important" or
 #   classic forage fish groupings, i.e.
 yearly_abundance_tall <- yearly_abundance_by_agency %>%
-  group_by(year, spp_agegroup) %>%
+  group_by(year, spp_agegroup, species, agecode) %>%
   summarize(total_abundance = sum(total_abundance),
             abundance_per_ha = total_abundance/375320) %>%
   ungroup %>% 
+  left_join(spp_codes %>% select(-latin_name)) %>%
   filter(spp_agegroup %in% c("61_1", "61_3", "63_1", "196_1", "196_3", "201_1", # filter "forage fish" only
                              "201_3", "180_1", "180_3", "204_1", "204_3", "206_1",
                              "206_3", "191_1", "191_3", "121_1", "121_3", "291_1",
@@ -145,10 +166,11 @@ write_csv(yearly_abundance_tall, "data derived/West Basin absolute abundance tal
 
 # spread data and print - similar to older FTG SAS output
 yearly_abundance_total <- yearly_abundance_tall %>%
+  select(-species, -agecode, -common_name) %>%
   spread(key = spp_agegroup, value = abundance_per_ha) %>%
   select(year, "371_1", "196_3", "196_1", "63_1", "366_5", "191_3", "191_1", "204_1",
          "291_3", "291_1", "201_3", "201_1", "291_3", "291_1", "302_1",
-         "301_1", "334_1", "331_1", clupeid, soft_ray, spiny_ray, all_forage)
+         "301_1", "334_1", "331_1")
 
 write_csv(yearly_abundance_total, "data derived/West Basin absolute abundance.csv")
 
@@ -172,14 +194,15 @@ write_csv(yearly_abundance_by_state, "data derived/West Basin absolute abundance
 
 ### calc percent difference between this years abundance and last 10 years   #####################
 abund_percent_diff <- yearly_abundance_tall %>%
-  filter(!spp_agegroup %in% c("all_forage", "clupeid", "soft_ray", "spiny_ray")) %>%
-  filter(!spp_agegroup %in% c("291_1", "291_3", "291_1", 
-                              "291_3", "201_1", "201_3")) %>%
-  group_by(spp_agegroup) %>%
-  summarize(ten_year_mean = mean(abundance_per_ha[which(year %in% seq(this_year-11,this_year-1))])+.001,
-            this_year_abundance = abundance_per_ha[which(year == this_year)]+.001,
-            percent_diff = ((((this_year_abundance+.0000001)-ten_year_mean)/ten_year_mean)*100)) %>% #percentage change from 10 yr mean
-  ungroup()
+  #filter(!spp_agegroup %in% c("all_forage", "clupeid", "soft_ray", "spiny_ray")) %>%
+  group_by(spp_agegroup, common_name, agecode) %>%
+  summarize(ten_year_mean = round(mean(abundance_per_ha[which(year %in% seq(this_year-11,this_year-1))])+.001, 1),
+            last_year_abundance = round(abundance_per_ha[which(year == this_year-1)]+.001, 1),
+            this_year_abundance = round(abundance_per_ha[which(year == this_year)]+.001, 1),
+            percent_diff_last_yr = round(((this_year_abundance+.0000001)-last_year_abundance)/last_year_abundance, 3),
+            percent_diff_10_yr = round(((this_year_abundance+.0000001)-ten_year_mean)/ten_year_mean, 3)) %>% #percentage change from 10 yr mean
+  ungroup() %>%
+  arrange(common_name, agecode)
 
 write_csv(abund_percent_diff, "data derived/percent change.csv")
 

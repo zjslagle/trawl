@@ -6,7 +6,7 @@ source("2_abundance summary.R")
 #### Fig 2.4.2 Graph - mean abundance by fish group, 1988 - present   ##########################
 cols = c("clupeid" = "red", "spiny_ray" = "yellow", "soft_ray" = "deepskyblue")
 
-yearly_abundance_tall %>%
+density_by_group <- yearly_abundance_tall %>%
   filter(spp_agegroup %in% c("clupeid", "spiny_ray", "soft_ray")) %>%
   ggplot(aes(x = year, y = abundance_per_ha, group = spp_agegroup, fill = spp_agegroup))+
     geom_area(position = "stack", color = "black")+
@@ -18,7 +18,9 @@ yearly_abundance_tall %>%
     scale_x_continuous(expand = c(0,0), breaks = seq(1988,this_year,by=5))+
     scale_y_continuous(expand = c(0,0))+
     labs(x="", y="Fish/ha")+
-    scale_fill_manual(name = "", values = cols, labels = c("Clupeid", "Spiny-rayed", "Soft-rayed"))-> density_by_group
+    scale_fill_manual(name = "", values = cols, labels = c("Clupeid", "Spiny-rayed", "Soft-rayed"))
+
+density_by_group
 
 ggsave(plot = density_by_group, "figures/fig 2_4_2 West Basin Density by group.png", 
        width = 7, height = 4, units = "in",dpi = 600)
@@ -108,10 +110,10 @@ ggsave("figures/rel abundance goby and and troutperch.png",
 
 
 ### Abundance graph for any species  #########################
-target_spp = "191_1"
+target_spp = "302_1"
 
 yearly_abundance_tall %>%
-  filter(spp_agegroup == target_spp) %>%
+  filter(spp_agegroup == target_spp) %>% 
   ggplot(aes(x = year, y = abundance_per_ha))+
   geom_area(position = "stack", color = "black")+
   theme(axis.title = element_text(size=14, face = "bold"), axis.text.y=element_text(size=14, color = "black"), 
@@ -122,18 +124,17 @@ yearly_abundance_tall %>%
   scale_y_continuous(expand = c(0,0))+
   labs(x = "", y = "Fish/ha", 
        title = paste(target_spp, "relative abundance over time, West Basin Lake Erie"),
-       subtitle = "Source: interagency (OMNRF & ODNR) trawl data, 1988 - present")
+       subtitle = "Source: interagency (OMNDMNRF & ODNR) trawl data, 1988 - present")
 
 ggsave(paste("figures/rel abundance ", target_spp, ".png"), 
-       width = 7, height = 5, units = "in",dpi = 600)
-
+       width = 7, height = 4, units = "in",dpi = 600)
 
 ### Graph - % change for species this year vs last 10 years  ###########
 
 # turn 2nd line on for top 5 +/- changes
 abund_percent_diff %>%
-  filter(rank(percent_diff) %in% c(1:5, seq(n(),n()-4))) %>% # get top and bottom five (biggest changes) - turn OFF for All Species
-  ggplot(aes(x = reorder(spp_agegroup, percent_diff), y = percent_diff, fill = percent_diff))+
+ filter(rank(percent_diff) %in% c(1:5, seq(n(),n()-4))) %>% # get top and bottom five (biggest changes) - turn OFF for All Species
+  ggplot(aes(x = reorder(paste0(common_name, "-AC ", agecode), percent_diff), y = percent_diff, fill = percent_diff))+
     geom_col()+
     theme_minimal()+
     labs(y = paste("% difference: ", this_year, "- 10 yr mean"),
@@ -148,18 +149,18 @@ abund_percent_diff %>%
           panel.background = element_blank(), text = element_text(family = "Times"),
           strip.background = element_rect(fill = "white", color = "black"))
 
-ggsave("figures/percent difference - all species.png", width = 7, height = 5, units = "in",dpi = 600)
+ggsave("figures/percent difference - top 5.png", width = 7, height = 5, units = "in",dpi = 600)
 
 
 # Log scale (only for increases, log(negative number) is undefined)
 abund_percent_diff %>%
-  filter(percent_diff > 0) %>%
+  filter(rank(percent_diff) %in% seq(n(),n()-4)) %>% #top 5
   ggplot(aes(x = reorder(spp_agegroup, percent_diff), y = percent_diff, fill = percent_diff))+
   geom_col(col = "black")+
   theme_minimal()+
-  labs(y = paste("% difference: ", this_year, "- 10 yr mean"))+
+  labs(y = paste("Log % difference: ", this_year, "- 10 yr mean"))+
   scale_fill_distiller(type = "seq", palette = "Blues", direction = 1)+
-  scale_y_log10()+
+  scale_y_log10(labels = function(x) x/10)+
   theme(axis.title = element_text(size=14, face = "bold"), axis.text.y=element_text(size=14, color = "black"), 
         axis.text.x=element_text(size=14, vjust=1, hjust = 1, color = "black", angle = 45), axis.line = element_line(color = "black"),
         axis.title.x = element_blank(), panel.grid.minor = element_blank(),

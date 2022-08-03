@@ -74,7 +74,7 @@ catch_summary %>%
 # Apply FPCs and generate biomass per m^2 by site
 
 #first, get biomass per site
-combo_length_data %>%
+biomass_summary_by_site <- combo_length_data %>%
   group_by(crn, yrsam, agency, species, agecode) %>%
     summarize(total_weight = sum(weight)) %>%
   ungroup() %>% # so complete() can function properly
@@ -122,22 +122,24 @@ combo_length_data %>%
                            agency == "ON" ~ "CAN",
                            T ~ "US"),
          area_swept = effdist * wings,
-         biomass_per_area = total_weight/area_swept) -> biomass_summary_by_site
+         ha_swept = area_swept/10000,
+         biomass_per_area = total_weight/area_swept) # units are per grams per m2
 
 # Output biomass by site - test for now
-# write_csv(biomass_summary_by_site %>%
-#             select(year, crn, yrsam, species, agecode, agency, total_weight, area_swept, biomass_per_area), 
-#           "data derived/Forage biomass by CRN.csv")
+ write_csv(biomass_summary_by_site %>% #filter(year == 2021, species == 331, agecode == 1) %>%
+             select(year, crn, yrsam, species, agecode, agency, total_weight, area_swept, ha_swept, biomass_per_area) %>%
+              mutate(kg_per_ha = biomass_per_area*10),
+             "data derived/IA Biomass by CRN.csv")
 
 
 
 ### Expand biomass per site to West Basin (stratified by depth and agency)   #############################################
 #
-# Expand catch/m2 to absolute abundance (total g) by agency based on estimated area across each depth strata;
+# Expand biomass/m2 to absolute biomass (total g) by agency based on estimated area across each depth strata;
 #   Estimates of area by depth strata are from Arcview exercise; 
 #     See: S:\DuFour\1_Projects\1_Trawl\misc\Background info\Interagency Area and Vol Calcs.xls
 #
-# NOTE - SAS code does this by volume, giving shallow ON sites 62% of biomass despite those sites only making up 
+# NOTE - SAS code does this by volume, giving shallow ON sites 62% of total calc'ed biomass despite those sites only making up 
 #         0-15% of trawled sites per year. Here I switch to area (following abundance code) and recode years missing
 #         shallow ON sites to a combined shallow/deep strata. Old code would assume there were zero fish!
 
@@ -155,7 +157,7 @@ missing_site_years <- biomass_summary_by_site %>%
 
 yearly_biomass_by_agency <- biomass_summary_by_site %>%
   left_join(missing_site_years) %>%
-  mutate(depth_strata = if_else(is.na(combine), depth_strata, "all_depths")) %>% # add 3rd strata "combined"
+  #mutate(depth_strata = if_else(is.na(combine), depth_strata, "all_depths")) %>% # add 3rd strata "combined" - NEEDS LEC APPROVAL!
   group_by(year, country, depth_strata, species, agecode) %>%
     summarize(mean_biomass_g = mean(biomass_per_area)) %>% #mean biomass (g/m2) per year/country/depth/spp/ageclass
   ungroup() %>%
@@ -167,23 +169,45 @@ yearly_biomass_by_agency <- biomass_summary_by_site %>%
   select(-mean_biomass_g)                                 # basinwide area = 3.7532e+09 m2
 
 #sum across lake and state
-biomass_summary_all_spp <- yearly_biomass_by_agency %>%
+biomass_summary_all_spp_by_state <- yearly_biomass_by_agency %>%
   group_by(year, country, species, agecode) %>%
     summarize(total_biomass_mt = sum(total_biomass_g)/1000000) %>% #convert to metric tons
   arrange(country, year) %>%
   left_join(spp_codes %>% select(-latin_name)) %>%
   left_join(forage_groups)
 
+#Biomass by species across lake
+biomass_summary_all_spp <- biomass_summary_all_spp_by_state %>%
+  group_by(year, species, agecode) %>%
+  summarize(total_biomass_mt = sum(total_biomass_mt)) %>% #convert to metric tons
+  arrange(species, agecode, year) %>%
+  left_join(spp_codes %>% select(-latin_name))
 
-biomass_summary_groups <- biomass_summary_all_spp %>%
-  group_by(year, group) %>%
-  summarize(total_biomass_mt = sum(total_biomass_mt)) %>%
+biomass_summary_all_spp %>%
+  write_csv("data derived/West Basin biomass estimates by species.csv")
+
+
+
+# total biomass
+biomass_summary_total <- biomass_summary_all_spp_by_state %>%
+  filter(!is.na(group)) %>%
+  group_by(year) %>%
+    summarize(total_biomass_mt = sum(total_biomass_mt)) %>%
   ungroup() %>%
-  filter(!is.na(group))
+  mutate(group = "all_forage")
+
+# biomass by functional group (spiny rayed, soft rayed, clupeid), join total
+biomass_summary_groups <- biomass_summary_all_spp_by_state %>%
+  group_by(year, group) %>%
+    summarize(total_biomass_mt = sum(total_biomass_mt)) %>%
+  ungroup() %>%
+  filter(!is.na(group)) %>%
+  bind_rows(biomass_summary_total)
+
 
 ### Output biomass into older formats   ########################################
 # reshape into older format - forage groups by country in wide format
-biomass_summary_all_spp %>%
+biomass_summary_all_spp_by_state %>%
   group_by(year, country, group) %>%
     summarize(total_biomass_mt = sum(total_biomass_mt)) %>%
   ungroup() %>%
@@ -195,7 +219,7 @@ biomass_summary_all_spp %>%
   write_csv("data derived/West Basin biomass estimates by agency.csv")
 
 # reshape into older format - forage groups Total/Basinwide in wide format
-biomass_summary_all_spp %>%
+biomass_summary_all_spp_by_state %>%
   group_by(year, group) %>%
   summarize(total_biomass_mt = sum(total_biomass_mt)) %>%
   ungroup() %>%

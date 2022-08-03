@@ -21,6 +21,7 @@ mean_lengths %>%
     geom_point(aes(pch = common_name))+
     scale_x_continuous(expand = c(0,0), breaks = seq(1988,this_year,by=5))+
     scale_y_continuous(expand = c(0,0))+
+    #coord_cartesian(xlim = c(2000, this_year))+          # <- only recent years
     labs(x="", y="Mean total length (mm)")+
     scale_color_brewer(palette = "Paired", name = "")+
     scale_linetype_discrete(name = "")+
@@ -34,6 +35,60 @@ mean_lengths %>%
           legend.position = "top",
           legend.key = element_blank()) 
 
-ggsave("figures/Fig 4_3_3 mean lengths.png", width = 6, height = 4, units = "in",dpi = 600)
+ggsave("figures/Fig 2_3_3_1 mean lengths.png", width = 6, height = 4, units = "in",dpi = 600)
 
+# text summary:
+mean_lengths %>%
+  filter(species %in% c(334, 331, 302, 301), agecode == 1, year == this_year)
 
+#### Fig 4.3.3 - mean lengths for sportfish species MINUS WAE
+mean_lengths %>%
+  filter(species %in% c(301, 302, 331), agecode == 1) %>% 
+  ggplot(aes(x = year, y = mean_length, group = common_name, lty = common_name, color = common_name))+
+  geom_line(size = 1)+
+  geom_point(aes(pch = common_name))+
+  scale_x_continuous(expand = c(0,0), breaks = seq(1988,this_year,by=5))+
+  scale_y_continuous(expand = c(0,0))+
+  coord_cartesian(xlim = c(2000, this_year))+          # <- only recent years
+  labs(x="", y="Mean total length (mm)")+
+  scale_color_brewer(palette = "Paired", name = "")+
+  scale_linetype_discrete(name = "")+
+  scale_shape_discrete(name = "")+
+  theme(axis.title = element_text(size=14, face = "bold"), 
+        axis.text.y=element_text(size=14, color = "black"), 
+        axis.text.x=element_text(size=14, vjust=1, color = "black"), 
+        axis.line = element_line(color = "black"), 
+        panel.background = element_blank(), 
+        text = element_text(family = "Times"), 
+        legend.position = "top",
+        legend.key = element_blank()) 
+
+ggsave("figures/mean lengths - sportfishes minus WAE.png", width = 6, height = 4, units = "in",dpi = 600)
+
+#### Similar to above, but actual prey fish
+mean_lengths %>%
+  filter(species %in% c(196, 063) & agecode == 1| species == 366) %>% 
+  ggplot(aes(x = year, y = mean_length, group = common_name, lty = common_name, color = common_name))+
+  geom_line(size = 1)+
+  geom_point(aes(pch = common_name))+
+  scale_x_continuous(expand = c(0,0), breaks = seq(1988,this_year,by=5))+
+  scale_y_continuous(expand = c(0,0))+
+  labs(x="", y="Mean total length (mm)")+
+  scale_color_brewer(palette = "Paired", name = "")+
+  scale_linetype_discrete(name = "")+
+  scale_shape_discrete(name = "")+
+  theme(axis.title = element_text(size=14, face = "bold"), 
+        axis.text.y=element_text(size=14, color = "black"), 
+        axis.text.x=element_text(size=14, vjust=1, color = "black"), 
+        axis.line = element_line(color = "black"), 
+        panel.background = element_blank(), 
+        text = element_text(family = "Times"), 
+        legend.position = "top",
+        legend.key = element_blank()) 
+
+ggsave("figures/mean lengths - preyfishes.png", width = 6, height = 4, units = "in",dpi = 600)
+
+mean_lengths %>%
+  filter(species == 196, agecode == 1) %>%
+  ggplot(aes(x = year, y = mean_length))+
+    geom_line()

@@ -1,6 +1,6 @@
 #source("read data - 2020 format.R")
 
-### OLD Abundance summary  - for reference only, use 2_cpha and abundance summary.R for actual summaries
+### OLD Abundance summary  - for reference only, use 2_abundance summary.R for actual summaries
 
 # sum over CRN (only summarizes ~10 rows), join effort, filter (not sure if last step is necc)
 draft_catch_summary <- all_catch %>%
