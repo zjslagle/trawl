@@ -3,7 +3,7 @@ source("2_abundance summary.R")
 source("3_biomass summary.R")
 require(xlsx)
 
-# write all_tibbles to excel workbook
+### write all_tibbles to excel workbook  ########################################################
 
 write_excel_csv(all_effort %>%
                   arrange(year, month, day) %>%
@@ -65,3 +65,12 @@ biomass_summary_all_spp %>%
 ### Forage length data  ###########################
 all_lengths %>%
   write_csv("data derived/data requests/1_11_22 West Basin forage fish lengths.csv")
+
+### 2022 Touhue & DuFour forage data    #########################################
+# forage available to WAE
+yearly_abundance_tall %>%
+  filter(species %in% c(61, 196, 121, 201, 291, 366)|
+           species %in% c(63, 301, 302, 331, 371) & agecode == 1) %>%
+  left_join(agecodes) %>%
+  select(-agecode) %>%
+  write_csv("data derived/data requests/22_09_29 Lake Erie Western Basin Interagency Forage abundances.csv")

@@ -23,7 +23,7 @@ draft_catch_summary <- all_catch %>%
 catch_summary <- draft_catch_summary %>%
   mutate(spp_agegroup = paste0(species, "_", agecode)) %>%
   group_by(projcode, year, agency, yrsam, species, agecode, spp_agegroup) %>%
-  summarize(sum_catch = sum(sum_catch)) %>%
+    summarize(sum_catch = sum(sum_catch)) %>%
   ungroup() %>%
   complete(nesting(projcode, year, agency, yrsam), 
            nesting(species, agecode, spp_agegroup), 
@@ -43,16 +43,16 @@ catch_summary <- catch_summary %>%
 # adjusting 2 diff OH vessels (RVs Explorer/Gibraltar and Explorer II) to the fishing power of Ontario's vessel (R/V Keenosay)
  
 catch_per_area <- catch_summary %>%
-  mutate(depth_strata = case_when(depth > 6 ~ "deep", #called DEPT = 1 in old code
+  mutate(depth_strata = case_when(depth > 6 ~ "deep", #called DEPT = 2 in old code
                                   T ~ "shallow"),
          effdist = effdist * 1852, #convert nautical miles to meters
          wings = case_when(agency == "OH" ~ case_when(year < 2002 ~ 4.83,
                                                       year > 2001 ~ 5.0,
                                                       T ~ NA_real_),#must use NA_real_, else we get a matching error
                            agency == "ON" ~ 5.02),
-         state = case_when((agency == "ON" & longitude > -83.2900) ~ "ON", # setting Michigan sites to state = OH; these are OMNRF-fished sites in US/OH strata
-                           agency == "ON" ~ "OH",
-                           T ~ "OH"),
+         state = case_when((agency == "ON" & longitude < -83.2900) ~ "US", # ON-fished sites in MI waters 1988-95; these get summarized in US waters
+                           agency == "ON" ~ "CA",
+                           T ~ "US"),
          area_swept = effdist * wings,
          fish_per_area = sum_catch/area_swept) %>% #catch per m^2
   #apply Fishing Power Corrections (see Tyson et al. 2006)
@@ -84,30 +84,30 @@ catch_per_area <- catch_summary %>%
 #       North Am. J. Fish. Manag. 26, 559–570. https://doi.org/10.1577/m05-027.1
 
 cpha_by_site <- catch_per_area %>%
-  group_by(year, yrsam, crn, agency, depth_strata, spp_agegroup, species, agecode) %>%
-  summarize(cpha = sum(fish_per_area)*10000) %>% #convert meters^2 to hectares
+  group_by(year, yrsam, crn, state, depth_strata, spp_agegroup, species, agecode) %>%
+  summarize(cpha = fish_per_area*10000) %>% #convert meters^2 to hectares
   ungroup
 
 #doublecheck that we didn't lose a bunch of sites somehow!
 cpha_by_site %>% 
-  select(year, agency, yrsam) %>% unique %>% 
-  xtabs(~year+agency, data = .)
+  select(year, state, yrsam) %>% unique %>% 
+  xtabs(~year+state, data = .)
 
 #write to CSV
 cpha_by_site %>%
   write_csv("data derived/Interagency CPHA by site.csv")
 
 # quick Age-0 walleye (or whatever) graph
-cpha_by_site %>%
-  group_by(year, spp_agegroup) %>%
-  summarize(mean_cpha = mean(cpha)) %>%
-  filter(spp_agegroup == "334_1") %>%
-  ggplot(aes(x = year, y = mean_cpha))+
-    geom_col()
+# cpha_by_site %>%
+#   group_by(year, spp_agegroup) %>%
+#   summarize(mean_cpha = mean(cpha)) %>%
+#   filter(spp_agegroup == "334_1") %>%
+#   ggplot(aes(x = year, y = mean_cpha))+
+#     geom_col()
 
 ### Create functional groupings (spiny-rayed, clupeid, soft-rayed, and total) in new tibble   ################
 fish_group_summary <- catch_per_area %>%
-  group_by(year, crn, yrsam, agency, depth_strata) %>%
+  group_by(year, crn, yrsam, state, depth_strata) %>%
   summarize(clupeid = sum(fish_per_area[spp_agegroup %in% c("61_1", "61_3", "63_1")]),
             shiner = sum(fish_per_area[spp_agegroup %in% c("196_1", "196_3", "201_1", "201_3",
                                                   "180_1", "180_3", "204_1", "204_3", "206_1", "206_3")]),
@@ -127,8 +127,8 @@ catch_summary_by_site <- catch_per_area %>%
 
 ### Extrapolate abundance per area up to basinwide estimates   #############################################
 # Average catch/m2 over year, agency, depth strata, and spp_agegroup
-yearly_abundance_by_agency <- catch_summary_by_site %>%
-  group_by(year, agency, depth_strata, spp_agegroup, species, agecode) %>%
+mean_cpha_by_strata <- catch_summary_by_site %>%
+  group_by(year, state, depth_strata, spp_agegroup, species, agecode) %>%
   summarize(mean_fish = mean(fish_per_area),
             sd_fish = sd(fish_per_area)) %>%
   ungroup
@@ -138,10 +138,10 @@ yearly_abundance_by_agency <- catch_summary_by_site %>%
 # Expand catch/ha to absolute abundance by agency based on estimated area across each depth strata;
 #   Estimates of area by depth strata are from Arcview exercise; SAS code claims "Summary attached" but it's not
 #     Then, calc fish/ha
-yearly_abundance_by_agency <- yearly_abundance_by_agency %>%
-  mutate(total_abundance = case_when(agency == "ON" ~ case_when(depth_strata == "shallow" ~ mean_fish * 1.681E+8,
+yearly_abundance_by_agency <- mean_cpha_by_strata %>%
+  mutate(total_abundance = case_when(state == "CA" ~ case_when(depth_strata == "shallow" ~ mean_fish * 1.681E+8,
                                                                 depth_strata == "deep" ~ mean_fish * 1.244E+9),
-                                     agency == "OH" ~ case_when(depth_strata == "shallow" ~ mean_fish * 9.281E+8,
+                                     state == "US" ~ case_when(depth_strata == "shallow" ~ mean_fish * 9.281E+8,
                                                                 depth_strata == "deep" ~ mean_fish * 1.413E+9)),
          abundance_per_ha = total_abundance/375320) # number per hectare
 
@@ -177,7 +177,7 @@ write_csv(yearly_abundance_total, "data derived/West Basin absolute abundance.cs
 
 # write CSV with same but split by state
 yearly_abundance_by_state <- yearly_abundance_by_agency %>%
-  group_by(year, agency, spp_agegroup) %>%
+  group_by(year, state, spp_agegroup) %>%
   summarize(total_abundance = sum(total_abundance),
             abundance_per_ha = total_abundance/375320) %>%
   ungroup %>% 
@@ -205,4 +205,6 @@ abund_percent_diff <- yearly_abundance_tall %>%
   arrange(common_name, agecode)
 
 write_csv(abund_percent_diff, "data derived/percent change.csv")
+
+beep(5)
 
