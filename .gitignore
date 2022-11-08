@@ -9,3 +9,8 @@
 data old/*
 figures/*
 data sources/*
+*.docx
+Reports/
+interagency - Ontario data/
+SAS vs R Debug/
+Interagency references/
