@@ -24,7 +24,7 @@ library(tidyverse)
 options(warn = 0) #warnings back on
 
 
-this_year = year(now())-1 #get this year
+this_year = year(now()) #get this year
 windowsFonts(Times=windowsFont("Times New Roman"))
 
 #read in species codes/common names and grouping (diff files b/c need to split some age-0 fish into forage groups)
@@ -36,7 +36,8 @@ agecodes = tibble(agecode = 1:5,
 ### Get newer (2020) data - different database with less data   #####################
 # Need to use the "parsed" database - OMNRF initially classifies many of their intermediate-sized fish as agecode 5, then
 # parses/allocates these fish afterwards into agecode 1 or 3 based on... length I guess? Need to ask Andy Cook.  
-trawl_database <- odbcConnectAccess2007("data sources/ON21parse_OH21_ERIEWEST_TRAWL_IN_OH_FMT_Nov23.accdb")
+#trawl_database <- odbcConnectAccess2007("data sources/ON21parse_OH21_ERIEWEST_TRAWL_IN_OH_FMT_Nov23.accdb")
+trawl_database <- odbcConnectAccess2007("data sources/ON22parse_OH22_ERIEWEST_TRAWL_IN_OH_FMT_Nov15_22.accdb")
 
 #list tables in trawl database
 sqlTables(trawl_database)

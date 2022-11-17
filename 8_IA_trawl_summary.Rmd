@@ -1,0 +1,121 @@
+---
+title: "Interagency Trawl Summary"
+author: "Ohio Division of Wildlife - Zak Slagle"
+date: "`r format(Sys.time(), '%B %Y')`"
+knit: (function(inputFile, encoding) { 
+      rmarkdown::render(inputFile,
+                        encoding=encoding,
+                        output_options = list(toc = TRUE),
+                        output_file=file.path(dirname(inputFile), "Reports", 'Western Basin Interagency Trawl Summary 2022.pdf')) })
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE) #echo = TRUE displays the code
+source("8_markdown summaries.R", local = knitr::knit_global()) #ignore for now
+```
+
+---
+
+  This document summarizes the interagency trawl program results from August of `r this_year`, combining Ontario MNRF and Ohio DOW trawl catches to obtain Western Basin estimates of fish per hectare. These should be considered preliminary data and **should not be shared with the public**. 
+  
+  
+### Methods 
+  Briefly, trawl catches are transformed to catch per hectare using trawl distance and SCANMAR-derived, vessel-specific wing widths. Fishing Power Corrections are applied to catches from the ODNR R/V *Explorer* (1988–2002) and *Explorer II* (2003–present) to correct those vessels' fishing power to the OMNRF R/V *Keenosay* (Tyson et al. 2006). Catch-per-hectare is then extrapolated up to country- and depth-specific strata area and then divided by the total basin area to yield a basinwide abundance estimate (in fish per hectare).
+
+## Trawl Effort
+![](figures/trawl sites map 2022.png)
+
+Ontario and Ohio combined to attempt `r effort_summary$trawl_sites` trawl sites in August `r this_year`, of which `r effort_summary$low_do_sites` sites were removed due to hypoxia (<2.0 mg/L; red points). In total, `r effort_summary$good_trawl_sites` sites were used in this year's index summaries.
+
+\newpage
+
+## Walleye Indices
+
+### Young-of-year
+![Young-of-year Walleye catch per hectare, Western Basin Lake Erie](figures/markdown/markdown abundance 334_1.png)
+The Western Basin YOY Walleye index in `r this_year` was moderate (`r abund$abundance[which(abund$spp_agegroup == "334_1")]` fish/ha) compared to recent years, but strong compared to the overall time series. This is the `r ranks$rank[which(ranks$spp_agegroup == "334_1")]` greatest year class since 1988.
+
+### Yearling
+![](figures/markdown/markdown abundance 334_2.png)
+
+The yearling Walleye index was also moderate (`r abund$abundance[which(abund$spp_agegroup == "334_2")]` fish/ha) compared to recent years, but strong compared to the overall time series. This is the `r ranks$rank[which(ranks$spp_agegroup == "334_2")]` greatest yearling year class since 1988.
+\newpage
+
+## Yellow Perch
+
+### Young-of-year
+![](figures/markdown/markdown abundance 331_1.png)
+
+The Western Basin YOY Yellow Perch index in `r this_year` was once again strong (`r abund$abundance[which(abund$spp_agegroup == "331_1")]` fish/ha), adding to the consistent hatches observed in the Western Basin for nearly a decade. This is the `r ranks$rank[which(ranks$spp_agegroup == "331_1")]` greatest year class since 1988.
+
+### Yearling
+![](figures/markdown/markdown abundance 331_2.png)
+
+The yearling Yellow Perch index was strong (`r abund$abundance[which(abund$spp_agegroup == "331_2")]` fish/ha), the highest abundance since 2019. This is the `r ranks$rank[which(ranks$spp_agegroup == "331_2")]` greatest yearling year class since 1988.
+
+\newpage
+
+## Total Forage
+
+![](figures/markdown/markdown abundance by forage group.png)
+
+Total forage density in `r this_year` returned to the lower levels (`r abund$abundance[which(abund$spp_agegroup == "all_forage")]` fish/ha) typical of 2019–2020.
+ As usual, forage makeup was dominated by spiny-rayed prey (e.g., White Perch, Yellow Perch, and Walleye; `r abund$abundance[which(abund$spp_agegroup == "spiny_ray")]` fish/ha). Note that 2021 catches were skewed due to a hypoxia-related outlier catch.
+
+\newpage
+
+## Major Forage Species
+### Young-of-year White Perch
+
+![](figures/markdown/markdown abundance 301_1.png)
+
+YOY White Perch abundance (`r abund$abundance[which(abund$spp_agegroup == "301_1")]` fish/ha) was moderate compared to recent years. White Perch abundance returned to 2019–2020 values after an outlier year in 2021, less than half of the ten-year mean abundance (`r abund$ten_year_mean[which(abund$spp_agegroup == "301_1")]` fish/ha).
+
+
+### Young-of-year Gizzard Shad
+
+![](figures/markdown/markdown abundance 63_1.png)
+
+YOY Gizzard Shad abundance (`r abund$abundance[which(abund$spp_agegroup == "63_1")]` fish/ha) was average compared to recent years but low compared to the time series;  abundance was down 88.6% compared to the ten-year mean abundance (`r abund$ten_year_mean[which(abund$spp_agegroup == "63_1")]` fish/ha).
+
+\newpage
+
+### Young-of-year Emerald Shiner
+
+![](figures/markdown/markdown abundance 196_1.png)
+
+YOY Emerald Shiner abundance (`r abund$abundance[which(abund$spp_agegroup == "196_1")]` fish/ha) remained minimal in `r this_year`, continuing a decade-long trend of low abundance for this historically-important forage fish. Shiner abundance is likely to remain low while the adult Walleye population is large (Knight and Vondracek 1993).
+
+### Adult Emerald Shiner
+
+![](figures/markdown/markdown abundance 196_3.png)
+
+Adult (ages-1+) Emerald Shiner abundance (`r abund$abundance[which(abund$spp_agegroup == "196_3")]` fish/ha) also remained minimal, continuing a decade-long trend of low abundance.
+
+\newpage
+
+### Round Goby
+
+![](figures/markdown/markdown abundance 366_5.png)
+
+Round Goby abundance across all ages (`r abund$abundance[which(abund$spp_agegroup == "366_5")]` fish/ha) was down from 2021 but was near the 10 year mean (`r abund$ten_year_mean[which(abund$spp_agegroup == "366_5")]` fish/ha).
+
+\newpage
+
+## Other Catches of Note
+### Young-of-year Spottail Shiner
+
+![](figures/markdown/markdown abundance 201_1.png)
+
+YOY Spottail Shiner abundance (`r abund$abundance[which(abund$spp_agegroup == "201_1")]` fish/ha) was high compared to recent years and was the second greatest since 2010.
+
+\newpage
+
+## Citations
+Knight, R.L., Vondracek, B., 1993. Changes in Prey Fish Populations in Western Lake Erie, 1969–88, as Related to Walleye, Stizostedion vitreum, Predation. Can. J. Fish. Aquat. Sci. 50, 1289–1298. <https://doi.org/10.1139/f93-146>
+
+Tyson, J.T., Johnson, T.B., Knight, C.T., Bur, M.T., 2006. Intercalibration of Research Survey Vessels on Lake Erie. North Am. J. Fish. Manag. 26, 559–570. <https://doi.org/10.1577/m05-027.1>
+
+---
+
+This report was automatically generated using R Markdown and the R packages *ggplot2*, *markdown*, *RODBC*, *readxl*, *stringr*, *beepr*, *lubridate*, and *forcats*, many of which are part of the Tidyverse ecosystem.

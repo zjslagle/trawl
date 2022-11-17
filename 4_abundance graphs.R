@@ -133,15 +133,17 @@ ggsave(paste("figures/rel abundance ", target_spp, ".png"),
 
 # turn 2nd line on for top 5 +/- changes
 abund_percent_diff %>%
- filter(rank(percent_diff) %in% c(1:5, seq(n(),n()-4))) %>% # get top and bottom five (biggest changes) - turn OFF for All Species
-  ggplot(aes(x = reorder(paste0(common_name, "-AC ", agecode), percent_diff), y = percent_diff, fill = percent_diff))+
+  filter(!is.na(agecode)) %>%
+  filter(rank(percent_diff_last_yr) %in% c(1:5, seq(n(),n()-4))) %>% # get top and bottom five (biggest changes) - turn OFF for All Species
+  ggplot(aes(x = reorder(paste0(common_name, "-AC ", agecode), percent_diff_10_yr ), 
+             y = percent_diff_10_yr , fill = percent_diff_10_yr ))+
     geom_col()+
     theme_minimal()+
     labs(y = paste("% difference: ", this_year, "- 10 yr mean"),
          title = paste("Percent difference from", this_year, "vs 10 year mean"))+
     scale_fill_distiller(type = "div", palette = "RdBu", direction = 1)+
-    scale_y_continuous(limits = c(-100, max(abund_percent_diff$percent_diff)), 
-                       breaks = c(-100, 0, 200, 400, 600, 800, 1000, 1200, 1400), 
+    scale_y_continuous(limits = c(-100, max(abund_percent_diff$percent_diff_10_yr)),
+                       breaks = c(-100, 0, 200, 400, 600, 800, 1000, 1200, 1400),
                        labels = c("-100%", "0", "+200%", "+400%", "+600%", "+800%", "+1000%", "+1200%", "+1400%"))+
     theme(axis.title = element_text(size=14, face = "bold"), axis.text.y=element_text(size=14, color = "black"), 
           axis.text.x=element_text(size=14, vjust=1, hjust = 1, color = "black", angle = 45), axis.line = element_line(color = "black"),

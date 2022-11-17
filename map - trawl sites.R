@@ -1,13 +1,15 @@
 ### Maps for FTG Report
-source("spatial - make simple features.R")
+source("spatial_1 - make simple features.R")
 ### Count this year's trawl sites, make shapefile for them   ###########################
 #count trawl sites, count # of low DO sites
-all_effort %>%
-  filter(year == this_year) %>% # filter(is.na(botoxy < 2)) %>% select(crn, botoxy)
+effort_summary <- all_effort %>%
+  filter(year == this_year) %>%  # filter(is.na(botoxy < 2)) %>% select(crn, botoxy)
   summarize(trawl_sites = n(),
             good_trawl_sites = sum(effstat == 1),
             low_do_sites = sum(botoxy < 2, na.rm = T),
             missing_do_sites = sum(is.na(botoxy)))
+
+effort_summary$trawl_sites
 
 #make a simple feature for sites
 trawl_sites <- all_effort %>%
@@ -25,18 +27,19 @@ trawl_sites <- all_effort %>%
 low_do_sites <- filter(trawl_sites, do_level == "low_do")
 
 ### Static Tmap Map   #############################################
-tm_shape(us_and_can, bbox = wb_bounds)+tm_fill()+ #plot land
+sites_tmap <- tm_shape(us_and_can, bbox = wb_bounds)+tm_fill()+ #plot land
   tm_shape(urban_areas)+tm_fill(col = "wheat3")+ #plot cities
   tm_shape(lake_erie)+tm_borders()+tm_fill(col="#ADD8E6")+ #plot lake, fill with blue
   tm_shape(feature_names)+tm_text("NAME", size = .8, fontface = "bold", bg.color = "wheat3", bg.alpha = 1, xmod = 1)+
   tm_shape(us_and_can)+tm_borders(col = "black", lty = 4)+ #redraw borders
   tm_shape(trawl_sites)+tm_bubbles(scale = .5, col = "black", border.col = "black")+
-  #tm_shape(low_do_sites)+tm_bubbles(scale = .5, col = "firebrick1", border.col = "black")+
+  tm_shape(low_do_sites)+tm_bubbles(scale = .5, col = "firebrick1", border.col = "black")+
   tm_scale_bar(breaks = c(0, 15, 30), position = c("left", "bottom"), text.size = 1)+
   tm_add_legend(type = "symbol", labels = c("Low DO", "Normoxic"), col = c("firebrick1", "black"), alpha = 1)+
   tm_layout(legend.position = c(.05,.14), legend.frame = "black", legend.bg.color = "white", fontfamily = "Times")
 
-tmap_save(filename = paste("figures/trawl sites map ", this_year, ".png", sep = ""), 
+tmap_save(sites_tmap,
+          filename = paste("figures/trawl sites map ", this_year, ".png", sep = ""), 
           width = 5, height = 4, units = "in")
 
 

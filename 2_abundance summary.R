@@ -94,8 +94,7 @@ cpha_by_site %>%
   xtabs(~year+state, data = .)
 
 #write to CSV
-cpha_by_site %>%
-  write_csv("data derived/Interagency CPHA by site.csv")
+#cpha_by_site %>% write_csv("data derived/Interagency CPHA by site.csv")
 
 # quick Age-0 walleye (or whatever) graph
 # cpha_by_site %>%
@@ -158,6 +157,7 @@ yearly_abundance_tall <- yearly_abundance_by_agency %>%
                              "201_3", "180_1", "180_3", "204_1", "204_3", "206_1",
                              "206_3", "191_1", "191_3", "121_1", "121_3", "291_1",
                              "291_3", "366_5","301_1", "302_1", "331_1", "334_1",
+                             "331_2", "334_2",
                              "371_1", "clupeid", "soft_ray", "spiny_ray", "all_forage")) %>%
   select(-total_abundance)
 
@@ -170,7 +170,7 @@ yearly_abundance_total <- yearly_abundance_tall %>%
   spread(key = spp_agegroup, value = abundance_per_ha) %>%
   select(year, "371_1", "196_3", "196_1", "63_1", "366_5", "191_3", "191_1", "204_1",
          "291_3", "291_1", "201_3", "201_1", "291_3", "291_1", "302_1",
-         "301_1", "334_1", "331_1")
+         "301_1", "334_1", "331_1", "331_2", "334_2")
 
 write_csv(yearly_abundance_total, "data derived/West Basin absolute abundance.csv")
 
@@ -199,8 +199,10 @@ abund_percent_diff <- yearly_abundance_tall %>%
   summarize(ten_year_mean = round(mean(abundance_per_ha[which(year %in% seq(this_year-11,this_year-1))])+.001, 1),
             last_year_abundance = round(abundance_per_ha[which(year == this_year-1)]+.001, 1),
             this_year_abundance = round(abundance_per_ha[which(year == this_year)]+.001, 1),
-            percent_diff_last_yr = round(((this_year_abundance+.0000001)-last_year_abundance)/last_year_abundance, 3),
-            percent_diff_10_yr = round(((this_year_abundance+.0000001)-ten_year_mean)/ten_year_mean, 3)) %>% #percentage change from 10 yr mean
+            percent_diff_last_yr = 100*round(((this_year_abundance+.0000001)-last_year_abundance+.0000001)/last_year_abundance+.000001, 3),
+            percent_diff_10_yr = 100*round(((this_year_abundance+.0000001)-ten_year_mean+.0000001)/ten_year_mean, 3), #percentage change from 10 yr mean
+            percent_diff_last_yr = if_else(is.finite(percent_diff_last_yr), percent_diff_last_yr, 0), #percentage change from 10 yr mean
+            percent_diff_10_yr = if_else(is.finite(percent_diff_10_yr), percent_diff_10_yr, 0)) %>% 
   ungroup() %>%
   arrange(common_name, agecode)
 
