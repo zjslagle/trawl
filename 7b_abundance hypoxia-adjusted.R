@@ -48,10 +48,6 @@ catch_per_area <- catch_summary %>%
                                                                               T ~ fish_per_area),
                                    T ~ fish_per_area))
 
-# Tyson, J.T., Johnson, T.B., Knight, C.T., Bur, M.T., 2006. 
-#       Intercalibration of Research Survey Vessels on Lake Erie. 
-#       North Am. J. Fish. Manag. 26, 559–570. https://doi.org/10.1577/m05-027.1
-
 cpha_by_site <- catch_per_area %>%
   group_by(year, yrsam, state, depth_strata, spp_agegroup, species, agecode) %>%
   summarize(cpha = fish_per_area*10000) %>% #convert meters^2 to hectares

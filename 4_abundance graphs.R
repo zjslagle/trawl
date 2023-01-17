@@ -124,7 +124,7 @@ yearly_abundance_tall %>%
   scale_y_continuous(expand = c(0,0))+
   labs(x = "", y = "Fish/ha", 
        title = paste(target_spp, "relative abundance over time, West Basin Lake Erie"),
-       subtitle = "Source: interagency (OMNDMNRF & ODNR) trawl data, 1988 - present")
+       subtitle = "Source: interagency (OMNRF & ODNR) trawl data, 1988 - present")
 
 ggsave(paste("figures/rel abundance ", target_spp, ".png"), 
        width = 7, height = 4, units = "in",dpi = 600)
@@ -134,7 +134,8 @@ ggsave(paste("figures/rel abundance ", target_spp, ".png"),
 # turn 2nd line on for top 5 +/- changes
 abund_percent_diff %>%
   filter(!is.na(agecode)) %>%
-  filter(rank(percent_diff_last_yr) %in% c(1:5, seq(n(),n()-4))) %>% # get top and bottom five (biggest changes) - turn OFF for All Species
+  mutate(rank = rank(percent_diff_10_yr, ties.method = "random")) %>%
+  filter(rank %in% c(1:5, seq(n(),n()-4))) %>% # get top and bottom five (biggest changes) - turn OFF for All Species
   ggplot(aes(x = reorder(paste0(common_name, "-AC ", agecode), percent_diff_10_yr ), 
              y = percent_diff_10_yr , fill = percent_diff_10_yr ))+
     geom_col()+
@@ -156,8 +157,10 @@ ggsave("figures/percent difference - top 5.png", width = 7, height = 5, units = 
 
 # Log scale (only for increases, log(negative number) is undefined)
 abund_percent_diff %>%
-  filter(rank(percent_diff) %in% seq(n(),n()-4)) %>% #top 5
-  ggplot(aes(x = reorder(spp_agegroup, percent_diff), y = percent_diff, fill = percent_diff))+
+  filter(!is.na(agecode)) %>%
+  mutate(rank = rank(percent_diff_10_yr, ties.method = "random")) %>%
+  filter(rank %in% c(seq(n(),n()-4))) %>% #top 5
+  ggplot(aes(x = reorder(spp_agegroup, percent_diff_10_yr), y = percent_diff_10_yr, fill = percent_diff_10_yr))+
   geom_col(col = "black")+
   theme_minimal()+
   labs(y = paste("Log % difference: ", this_year, "- 10 yr mean"))+

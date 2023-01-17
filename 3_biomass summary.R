@@ -3,6 +3,7 @@ source("2_abundance summary.R")
 ### Biomass estimates for Interagency trawl - by site and entire basin   ############################
 # This code reproduces SAS code originally written by Jeff Tyson for Forage Task Group summaries. Unfortunately,
 #   the original code contained numerous errors and previous FTG biomass estimates should NOT be trusted whatsoever.
+# See: "SAS to R Interagency Trawl Biomass Summary Conversion.docx"
 #   Code finally working Nov 2021. Z Slagle
 
 ### Calculate Biomass by site, so we can estimate biomass for species-years   ###########################
@@ -140,8 +141,9 @@ biomass_summary_by_site <- combo_length_data %>%
 #     See: S:\DuFour\1_Projects\1_Trawl\misc\Background info\Interagency Area and Vol Calcs.xls
 #
 # NOTE - SAS code does this by volume, giving shallow ON sites 62% of total calc'ed biomass despite those sites only making up 
-#         0-15% of trawled sites per year. Here I switch to area (following abundance code) and recode years missing
-#         shallow ON sites to a combined shallow/deep strata. Old code would assume there were zero fish!
+#         0-15% of trawled sites per year. Here I switch to area (following abundance code).
+ # Pending LEC approval: recode years missing shallow ON sites to a combined shallow/deep strata. 
+ #                        Old code would assume there were zero fish!
 
 # first find years where shallow sites are missing or low sample size
 missing_site_years <- biomass_summary_by_site %>%
@@ -230,4 +232,5 @@ biomass_summary_all_spp_by_state %>%
   arrange(year) %>%
   write_csv("data derived/West Basin biomass estimates Basinwide.csv")
 
+beep(3)
 

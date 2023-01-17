@@ -68,3 +68,6 @@ effort_hypoxia <- all_effort %>%
   left_join(neighbor_data) %>% 
   mutate(do_diff  = botoxy - neighbor_botoxy,
          apply_do_rule = if_else(botoxy > 2 & neighbor_botoxy < 2 & neighbor_dist < 5600, TRUE, FALSE))
+
+saveRDS(effort_hypoxia,
+        file = "data sources/effort_hypoxia.RDS")

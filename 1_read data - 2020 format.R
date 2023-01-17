@@ -24,7 +24,7 @@ library(tidyverse)
 options(warn = 0) #warnings back on
 
 
-this_year = year(now()) #get this year
+this_year = year(now())-1 #get this year
 windowsFonts(Times=windowsFont("Times New Roman"))
 
 #read in species codes/common names and grouping (diff files b/c need to split some age-0 fish into forage groups)
@@ -98,7 +98,8 @@ all_effort %>%
 all_lengths %>% 
   select(crn, projcode, agency, yrsam) %>% 
   anti_join(all_effort) %>% 
-  group_by(yrsam) %>% summarize(count = n())
+  group_by(crn, yrsam) %>% 
+  summarize(count = n())
 
 ### Fix errors and make joins in each dataset ###########################
 #

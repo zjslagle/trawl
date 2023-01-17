@@ -1,5 +1,6 @@
 ### Maps for FTG Report
 source("spatial_1 - make simple features.R")
+
 ### Count this year's trawl sites, make shapefile for them   ###########################
 #count trawl sites, count # of low DO sites
 effort_summary <- all_effort %>%
@@ -39,7 +40,7 @@ sites_tmap <- tm_shape(us_and_can, bbox = wb_bounds)+tm_fill()+ #plot land
   tm_layout(legend.position = c(.05,.14), legend.frame = "black", legend.bg.color = "white", fontfamily = "Times")
 
 tmap_save(sites_tmap,
-          filename = paste("figures/trawl sites map ", this_year, ".png", sep = ""), 
+          filename = paste("figures/maps/trawl sites map ", this_year, ".png", sep = ""), 
           width = 5, height = 4, units = "in")
 
 

@@ -14,7 +14,7 @@ all_catch %>%
     labs(title = "2021 Interagency Catches",
          subtitle = "One outlier site (253) for selected species shown in teal",
          x = "Catches", y = "Count")+
-    inverse_theme()+
+    #inverse_theme()+
     scale_fill_manual(values = c("#ef8a62", "#67a9cf"))+
     theme(legend.position = "none")
 

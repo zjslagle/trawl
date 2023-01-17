@@ -2,9 +2,10 @@ source("1_read data - 2020 format.R")
 
 
  ### Abundance Summary    ##################################
-# this R code is an attempt to replicate existing SAS code (written by Jeff Tyson) 
+# this R code replicates old SAS code (written by Jeff Tyson) 
 # that takes OH and ON trawl data, calc's fish numbers, and extrapolates up to basinwide
-# estimates.
+# estimates. There were several issues with old code, particularly in the biomass.
+# See: "SAS to R Interagency Trawl Biomass Summary Conversion.docx"
  
 # all_effort %<>% filter(!(year == 2021 & crn == 253))  #outlier site from 2021
 
@@ -39,8 +40,9 @@ catch_summary <- catch_summary %>%
 
 ### Apply Fishing Power Corrections and calculate abundance per area   ###################################
 #Use  nested case_when calls to find cases of Ohio trawl prior to 2002 and applying one
-# fishing correction to them, then finding Ohio trawls 2002-present and applying another. We are
-# adjusting 2 diff OH vessels (RVs Explorer/Gibraltar and Explorer II) to the fishing power of Ontario's vessel (R/V Keenosay)
+# fishing correction to them, then finding Ohio trawls 2002-present and applying another.
+#  We are adjusting 2 diff OH vessels (RVs Explorer/Gibraltar and Explorer II) to the fishing power of 
+# Ontario's vessel (R/V Keenosay).
  
 catch_per_area <- catch_summary %>%
   mutate(depth_strata = case_when(depth > 6 ~ "deep", #called DEPT = 2 in old code
@@ -208,5 +210,5 @@ abund_percent_diff <- yearly_abundance_tall %>%
 
 write_csv(abund_percent_diff, "data derived/percent change.csv")
 
-beep(5)
+beep(2)
 

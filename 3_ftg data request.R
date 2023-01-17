@@ -35,7 +35,7 @@ all_catch %>%
 all_catch %>%
   left_join(spp_codes) %>%
   arrange(year, agency) %>%
-  filter(common_name == "Tubenose goby") %>% view
+  filter(common_name == "Tubenose goby") 
 
 ### Hotspot analysis paper - Oct 2021    ########################
 catch_per_ha %>%

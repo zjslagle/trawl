@@ -1,7 +1,8 @@
 source("2_abundance summary.R")
 
 ### Align OH Interagency summary with ON estimates   #############################
-# 9/2022
+# Started 9/2022. Solved this issue by 11/2022, this code only kept for future reference. ZJS
+
 
 # 2021 discrepancy - Andy estimate less perch than me    ###########################
 # these sites have catch of YOY WAE but not YOY YP

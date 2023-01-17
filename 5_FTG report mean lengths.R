@@ -3,7 +3,7 @@ source("1_read data - 2020 format.R")
 ### FTG report - Mean length for YOY sportfish over time      ##########
 
 #join effort data, then summarize over year, spp, age class
-all_lengths %>%
+mean_lengths <- all_lengths %>%
   left_join(all_effort %>% select(projcode, agency, year)) %>%
   filter(!is.na(year), !is.na(length), year > 1987) %>%
   left_join(spp_codes) %>%
@@ -11,7 +11,7 @@ all_lengths %>%
   summarize(mean_length = mean(length),
             sd_length = sd(length),
             n_length = n()) %>%
-  ungroup -> mean_lengths
+  ungroup
 
 #### Fig 4.3.3 - mean lengths for sportfish species
 mean_lengths %>%

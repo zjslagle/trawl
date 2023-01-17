@@ -17,7 +17,6 @@ max_lengths <- left_join(max_length_to_get, all_lengths)
 
 # run shapiro tests on each dataset and sum
 max_lengths %>% 
-  select(-crn, -agency, -projcode, -common_name) %>%
   group_by(yrsam, species, agecode) %>%
   do(tidy(shapiro.test(.$length))) %>%
   mutate(is_normal = if_else(p.value < .05, "not_normal", "normal")) %>%

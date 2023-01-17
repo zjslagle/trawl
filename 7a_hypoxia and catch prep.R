@@ -7,6 +7,8 @@ source("spatial_2 - nearest neighbor.R")
 # https://doi.org/10.1139/cjfas-2014-0517
 #
 # Implement hypoxia adjustments to the abundance summary
+# can source "spatial_2 - nearest neighbor.R" to rerun this analysis, but it takes awhile.
+effort_hypoxia <- readRDS(file = "data sources/effort_hypoxia.RDS")
 
 ### Create Catch Summary   #############################################################
 # sum over CRN (only summarizes ~10 rows), join effort, filter out bad trawls

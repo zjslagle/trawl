@@ -1,6 +1,5 @@
 source("3_biomass summary.R")
 
-
 ### Fig 2.4.3 Biomass Graph    #####################
 cols = c("clupeid" = "red", "spiny_ray" = "yellow", "soft_ray" = "deepskyblue")
 panel_labels = c("clupeid" = "Clupeid", "spiny_ray" = "Spiny-rayed", "soft_ray" = "Soft-rayed")
@@ -44,3 +43,4 @@ biomass_summary_groups %>%
 
 ggsave("figures/biomass by group faceted.png", 
        width = 7, height = 5, units = "in",dpi = 600)
+

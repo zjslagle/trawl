@@ -111,7 +111,7 @@ ggsave(filename = paste0("figures/combo abund biomass - Round Goby all ages.png"
      plot = combo_plot,
      width = 7, height = 4, units = "in", dpi = 600)
 
-
+# ensure bobies are AC 5 (fixed now)
 biomass_summary_all_spp %>%
   filter(species == 366, total_biomass_mt > 0) %>%
   xtabs(~year+agecode, data = .)

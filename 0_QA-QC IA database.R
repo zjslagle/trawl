@@ -28,7 +28,7 @@ all_effort %>%
            depth < 2 | depth > 14|
            effdur < 0| effdur > 11|
            statime < 500| statime > 1700|
-           secchi < 0| secchi > 5) %>% view
+           secchi < 0| secchi > 5) 
 
 ### Catch    ##################
 all_catch %>% 
