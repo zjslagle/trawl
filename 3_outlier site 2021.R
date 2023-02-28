@@ -11,15 +11,19 @@ all_catch %>%
   ggplot(aes(x = catch, fill = outlier))+
     geom_dotplot(dotsize = 2)+
     facet_wrap(common ~ ., scales = "free_x")+
-    labs(title = "2021 Interagency Catches",
-         subtitle = "One outlier site (253) for selected species shown in teal",
-         x = "Catches", y = "Count")+
-    #inverse_theme()+
+    labs(subtitle = "One outlier site (253) for selected species shown in teal",
+         x = "Catch (n)", y = "Proportion of 2021 catches")+
+    theme_minimal()+
     scale_fill_manual(values = c("#ef8a62", "#67a9cf"))+
-    theme(legend.position = "none")
+    theme(legend.position = "none",
+          axis.text = element_text(size = 12, face = "bold"),
+          axis.title = element_text(size = 14, face = "bold"),
+          strip.text = element_text(size = 14, face = "bold"),
+          strip.background = element_rect(color = "black"),
+          panel.background = element_rect(color = "black"))
 
-ggsave("figures/outlier catch 2021/outlier plot dark.png",
-       width = 10, height = 6.5, units = "in",dpi = 600)
+ggsave("figures/outlier catch 2021/outlier plot.png",
+       width = 13, height = 6.5, units = "in",dpi = 600)
 
 # top catches, all time
 all_catch %>%

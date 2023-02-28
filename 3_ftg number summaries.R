@@ -81,10 +81,10 @@ yearly_abundance_tall %>%
 
 ### individual spp summaries    ##############
 abund_percent_diff %>%
-  filter(spp_agegroup %in% c("334_1", "331_1"))            # turn these on/off for diff spp
+  #filter(spp_agegroup %in% c("334_1", "331_1"))            # turn these on/off for diff spp
   #filter(spp_agegroup %in% c("301_1", "302_1", "63_1"))      # or just use the output file, really
   #filter(spp_agegroup %in% c("196_1", "196_3"))
-  #filter(spp_agegroup %in% c("366_5", "206_1", "291_1", "291_3")) 
+  filter(spp_agegroup %in% c("366_5", "206_1", "291_1", "291_3")) 
 
 
 ### Mess-around space   ######################

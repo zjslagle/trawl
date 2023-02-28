@@ -38,5 +38,5 @@ effort_points <- all_effort %>%
   filter(!is.na(longitude), !is.na(latitude)) %>%
   st_as_sf(coords = c("longitude", "latitude"), crs = 4326)
 
-temp <- effort_points%>% filter(year == 2021)
+temp <- effort_points %>% filter(year == 2021)
 mapview(temp ) 

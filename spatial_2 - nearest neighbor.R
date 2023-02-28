@@ -63,11 +63,8 @@ neighbor_data <- data_hypoxic %>%
   rename("neighbor_botoxy" = botoxy.y) %>%
   select(-year, -botoxy.x)
 
-# join to effort and determine sites that need rule applied
-effort_hypoxia <- all_effort %>%
-  left_join(neighbor_data) %>% 
-  mutate(do_diff  = botoxy - neighbor_botoxy,
-         apply_do_rule = if_else(botoxy > 2 & neighbor_botoxy < 2 & neighbor_dist < 5600, TRUE, FALSE))
+saveRDS(neighbor_data,
+        file = "data sources/neighbor_data.RDS")
 
-saveRDS(effort_hypoxia,
-        file = "data sources/effort_hypoxia.RDS")
+
+

@@ -8,59 +8,7 @@ source("7a_hypoxia and catch prep.R")
 #
 # Implement hypoxia adjustments to the abundance summary
 
-### Apply Fishing Power Corrections and calculate abundance per area   ###################################
 
-catch_per_area <- catch_summary %>%
-  mutate(depth_strata = case_when(depth > 6 ~ "deep", #called DEPT = 2 in old code
-                                  T ~ "shallow"),
-         effdist = effdist * 1852, #convert nautical miles to meters
-         wings = case_when(agency == "OH" ~ case_when(year < 2002 ~ 4.83,
-                                                      year > 2001 ~ 5.0,
-                                                      T ~ NA_real_),#must use NA_real_, else we get a matching error
-                           agency == "ON" ~ 5.02),
-         state = case_when((agency == "ON" & longitude < -83.2900) ~ "US", # ON-fished sites in MI waters 1988-95; these get summarized in US waters
-                           agency == "ON" ~ "CA",
-                           T ~ "US"),
-         area_swept = effdist * wings,
-         sum_catch = if_else(apply_do_rule == T, sum_catch/100, sum_catch), # <<<< HYPOXIA CORRECTION    <<<<<<<<<<<<<
-         fish_per_area = sum_catch/area_swept) %>% #catch per m^2
-  #apply Fishing Power Corrections (see Tyson et al. 2006)
-  mutate(fish_per_area = case_when((agency == "OH" & year < 2002) ~ case_when(spp_agegroup == "63_1" ~ fish_per_area*1.216,
-                                                                              spp_agegroup %in% c("196_1", "196_3") ~ fish_per_area*2.170,
-                                                                              spp_agegroup == "302_1"  ~ fish_per_area*1.644,
-                                                                              spp_agegroup == "331_1"  ~ fish_per_area*1.321,
-                                                                              spp_agegroup == "331_3"  ~ fish_per_area*1.185,
-                                                                              spp_agegroup == "334_1"  ~ fish_per_area*1.520,
-                                                                              spp_agegroup == "371_3"  ~ fish_per_area*1.505,
-                                                                              T ~ fish_per_area), 
-                                   #now OH 2002 - present:
-                                   (agency == "OH" & year > 2001) ~ case_when(spp_agegroup == "63_1"   ~ fish_per_area*2.362,
-                                                                              spp_agegroup == "196_1"  ~ fish_per_area*1.494,
-                                                                              spp_agegroup == "196_3"  ~ fish_per_area*1.494,
-                                                                              spp_agegroup == "291_1"  ~ fish_per_area*0.704,
-                                                                              spp_agegroup == "291_3"  ~ fish_per_area*0.704,
-                                                                              spp_agegroup == "301_1"  ~ fish_per_area*1.121,
-                                                                              spp_agegroup == "302_1"  ~ fish_per_area*3.203,
-                                                                              spp_agegroup == "334_1"  ~ fish_per_area*1.561,
-                                                                              spp_agegroup == "366_1"  ~ fish_per_area*0.423,
-                                                                              spp_agegroup == "366_5"~ fish_per_area*0.423,
-                                                                              spp_agegroup == "371_3"  ~ fish_per_area*0.598,
-                                                                              T ~ fish_per_area),
-                                   T ~ fish_per_area))
-
-cpha_by_site <- catch_per_area %>%
-  group_by(year, yrsam, state, depth_strata, spp_agegroup, species, agecode) %>%
-  summarize(cpha = fish_per_area*10000) %>% #convert meters^2 to hectares
-  ungroup
-
-#doublecheck that we didn't lose a bunch of sites somehow!
-cpha_by_site %>% 
-  select(year, state, yrsam) %>% unique %>% 
-  xtabs(~year+state, data = .)
-
-#write to CSV
-cpha_by_site %>%
-  write_csv("data derived/HYPOXIA - Interagency CPHA by site.csv")
 
 # quick Age-0 walleye (or whatever) graph
 # cpha_by_site %>%

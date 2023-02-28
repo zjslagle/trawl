@@ -19,7 +19,8 @@ for(i in 1:length(species_vec)){
     labs(x="", y="Abundance (fish/ha)")+
     theme(axis.title = element_text(size=12, face = "bold"), axis.text.y=element_text(size=12, color = "black"), 
           axis.text.x=element_text(size=14, vjust=1, color = "black"), axis.line = element_line(color = "black"), 
-          panel.background = element_blank(), text = element_text(family = "Times"))
+          panel.background = element_blank(), text = element_text(family = "Times"),
+          plot.margin = unit(c(3,1,1,1), "mm"))
   
   biomass_graph <- biomass_summary_all_spp %>%
     filter(species == target_species, agecode == 1) %>%
@@ -58,7 +59,8 @@ for(i in 1:length(species_vec)){
     labs(x="", y="Abundance (fish/ha)")+
     theme(axis.title = element_text(size=12, face = "bold"), axis.text.y=element_text(size=12, color = "black"), 
           axis.text.x=element_text(size=14, vjust=1, color = "black"), axis.line = element_line(color = "black"), 
-          panel.background = element_blank(), text = element_text(family = "Times"))
+          panel.background = element_blank(), text = element_text(family = "Times"),
+          plot.margin = unit(c(3,1,1,1), "mm"))
   
   biomass_graph <- biomass_summary_all_spp %>%
     filter(species == target_species, agecode == 3) %>%
@@ -90,7 +92,8 @@ abund_graph <- yearly_abundance_tall %>%
   labs(x="", y="Abundance (fish/ha)")+
   theme(axis.title = element_text(size=12, face = "bold"), axis.text.y=element_text(size=12, color = "black"), 
         axis.text.x=element_text(size=14, vjust=1, color = "black"), axis.line = element_line(color = "black"), 
-        panel.background = element_blank(), text = element_text(family = "Times"))
+        panel.background = element_blank(), text = element_text(family = "Times"),
+        plot.margin = unit(c(3,1,1,1), "mm"))
 
 biomass_graph <- biomass_summary_all_spp %>%
   filter(species == 366, agecode == 5) %>%
@@ -111,7 +114,7 @@ ggsave(filename = paste0("figures/combo abund biomass - Round Goby all ages.png"
      plot = combo_plot,
      width = 7, height = 4, units = "in", dpi = 600)
 
-# ensure bobies are AC 5 (fixed now)
+# ensure gobies are AC 5 (fixed now)
 biomass_summary_all_spp %>%
   filter(species == 366, total_biomass_mt > 0) %>%
   xtabs(~year+agecode, data = .)

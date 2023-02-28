@@ -7,25 +7,28 @@ effort_summary <- all_effort %>%
   filter(year == this_year) %>%  # filter(is.na(botoxy < 2)) %>% select(crn, botoxy)
   summarize(trawl_sites = n(),
             good_trawl_sites = sum(effstat == 1),
-            low_do_sites = sum(botoxy < 2, na.rm = T),
-            missing_do_sites = sum(is.na(botoxy)))
+            bad_trawl_sites = sum(effstat != 1),
+            low_do_sites = sum(effstat == 0),
+            missing_do_sites = sum(is.na(botoxy)),
+            hung_etc_sites = bad_trawl_sites - low_do_sites)
 
-effort_summary$trawl_sites
+effort_summary
 
 #make a simple feature for sites
 trawl_sites <- all_effort %>%
   filter(year == this_year) %>%   #effstat will filter out the low DO sites
   select(agency, crn, latitude, longitude, botoxy, effstat) %>%
   filter(!is.na(longitude), !is.na(latitude)) %>%
-  mutate(do_level = ifelse(botoxy < 2, "low_do", "ok_do"),
-         effstat = ifelse(botoxy < 2, 1, effstat), #need to keep Low DO sites, so set effstat==1 so we can filter out the rest
+  mutate(status = case_when(botoxy < 2|effstat == 0 ~ "low_do",
+                            effstat > 1 ~ "bad_trawl", 
+                            effstat == 1 ~ "ok_do"),
          longitude = ifelse(longitude > 0, -1 * longitude, longitude),
          site = as.numeric(str_sub(crn, -2, -1))) %>% #fixes error in trawl database, longitude should be negative
-  filter(effstat == 1) %>% 
   st_as_sf(coords = c("longitude", "latitude"), crs = 4326)
 
 
-low_do_sites <- filter(trawl_sites, do_level == "low_do")
+bad_sites <- filter(trawl_sites, status == "bad_trawl")
+low_do_sites <- filter(trawl_sites, status == "low_do")
 
 ### Static Tmap Map   #############################################
 sites_tmap <- tm_shape(us_and_can, bbox = wb_bounds)+tm_fill()+ #plot land
@@ -34,9 +37,11 @@ sites_tmap <- tm_shape(us_and_can, bbox = wb_bounds)+tm_fill()+ #plot land
   tm_shape(feature_names)+tm_text("NAME", size = .8, fontface = "bold", bg.color = "wheat3", bg.alpha = 1, xmod = 1)+
   tm_shape(us_and_can)+tm_borders(col = "black", lty = 4)+ #redraw borders
   tm_shape(trawl_sites)+tm_bubbles(scale = .5, col = "black", border.col = "black")+
-  tm_shape(low_do_sites)+tm_bubbles(scale = .5, col = "firebrick1", border.col = "black")+
+  tm_shape(low_do_sites)+tm_bubbles(scale = .5, col = "blue", border.col = "black")+
+  tm_shape(bad_sites)+tm_bubbles(scale = .5, col = "firebrick1", border.col = "black")+
   tm_scale_bar(breaks = c(0, 15, 30), position = c("left", "bottom"), text.size = 1)+
-  tm_add_legend(type = "symbol", labels = c("Low DO", "Normoxic"), col = c("firebrick1", "black"), alpha = 1)+
+  tm_add_legend(type = "symbol", labels = c("Low DO", "Bad trawl", "Normoxic"), 
+                col = c("blue", "firebrick1", "black"), alpha = 1)+
   tm_layout(legend.position = c(.05,.14), legend.frame = "black", legend.bg.color = "white", fontfamily = "Times")
 
 tmap_save(sites_tmap,

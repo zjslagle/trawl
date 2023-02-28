@@ -115,7 +115,7 @@ all_lengths %>%
 all_effort <- all_effort %>% 
   mutate(projcode = case_when(projcode %in% c("LEA-IF00_001","LEA_IF00-001") ~ "LEA_IF00_001",
                               T ~ projcode),#fix mismatch between underscores and dashes)
-         effdist = if_else(is.na(effdist), speed*(effdur/60), effdist)) # 1988-1995, ON trawled some in MI waters; these catches get applied to US strata
+         effdist = if_else(is.na(effdist), speed*(effdur/60), effdist)) 
 
 # fix errors in catch
 all_catch <- all_catch %>%

@@ -12,7 +12,7 @@ density_by_group <- yearly_abundance_tall %>%
     geom_area(position = "stack", color = "black")+
     theme(axis.title = element_text(size=14, face = "bold"), 
           axis.text.y=element_text(size=14, color = "black"), 
-          axis.text.x=element_text(size=14, vjust=1, color = "black"), axis.line = element_line(color = "black"), 
+          axis.text.x=element_text(size=14, vjust=.5, color = "black"), axis.line = element_line(color = "black"), 
           panel.background = element_blank(), text = element_text(family = "Times"), legend.position = "top",
           legend.text = element_text(size = 12)) +
     scale_x_continuous(expand = c(0,0), breaks = seq(1988,this_year,by=5))+
@@ -72,7 +72,7 @@ labs = c("196_3" = "Adult Emerald Shiner", "196_1" = "Age-0 Emerald Shiner")
 yearly_abundance_tall %>%
   filter(spp_agegroup %in% c("196_3", "196_1")) %>% 
   ggplot(aes(x = year, y = abundance_per_ha, group = spp_agegroup, fill = spp_agegroup))+
-  geom_area(position = "stack", alpha = .7, color = "black", lty = 2)+
+  geom_area(position = "stack", alpha = .7, color = "grey60")+
   #facet_grid(spp_agegroup ~ ., scales = "free", labeller = labeller(spp_agegroup = labs))+
   theme(axis.title = element_text(size=14, face = "bold"), axis.text.y=element_text(size=14, color = "black"), 
         axis.text.x=element_text(size=14, vjust=1, color = "black"), axis.line = element_line(color = "black"), 
@@ -110,7 +110,7 @@ ggsave("figures/rel abundance goby and and troutperch.png",
 
 
 ### Abundance graph for any species  #########################
-target_spp = "302_1"
+target_spp = "331_2"
 
 yearly_abundance_tall %>%
   filter(spp_agegroup == target_spp) %>% 

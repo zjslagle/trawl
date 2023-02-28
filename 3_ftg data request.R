@@ -74,3 +74,12 @@ yearly_abundance_tall %>%
   left_join(agecodes) %>%
   select(-agecode) %>%
   write_csv("data derived/data requests/22_09_29 Lake Erie Western Basin Interagency Forage abundances.csv")
+
+### Locations for FTG Report map  ####################
+all_effort %>%
+  filter(year == this_year, effstat == 1) %>%
+  mutate(survey = "interagency",
+         basin = "west",
+         agency = if_else(agency == "ON", "OMNRF", "ODNR")) %>%
+  select(survey, agency, basin, latitude, longitude) %>%
+  write_csv("data derived/ftg report points.csv")

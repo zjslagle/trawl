@@ -210,5 +210,5 @@ abund_percent_diff <- yearly_abundance_tall %>%
 
 write_csv(abund_percent_diff, "data derived/percent change.csv")
 
-beep(2)
+#beep(2) # for some reason, this causes R to abort!
 

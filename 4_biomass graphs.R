@@ -9,7 +9,7 @@ biomass_summary_groups %>%
   ggplot(aes(x = year, y = total_biomass_mt, group = group, fill = group))+
   geom_area(position = "stack", color = "black")+
   theme(axis.title = element_text(size=14, face = "bold"), axis.text.y=element_text(size=14, color = "black"), 
-        axis.text.x=element_text(size=14, vjust=1, color = "black"), axis.line = element_line(color = "black"), 
+        axis.text.x=element_text(size=14, vjust=.5, color = "black"), axis.line = element_line(color = "black"), 
         panel.background = element_blank(), text = element_text(family = "Times"), legend.position = "top",
         legend.text = element_text(size = 12))+
   scale_x_continuous(expand = c(0,0), breaks = seq(1988,this_year,by=5))+
