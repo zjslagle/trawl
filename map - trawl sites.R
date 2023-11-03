@@ -37,7 +37,7 @@ sites_tmap <- tm_shape(us_and_can, bbox = wb_bounds)+tm_fill()+ #plot land
   tm_shape(feature_names)+tm_text("NAME", size = .8, fontface = "bold", bg.color = "wheat3", bg.alpha = 1, xmod = 1)+
   tm_shape(us_and_can)+tm_borders(col = "black", lty = 4)+ #redraw borders
   tm_shape(trawl_sites)+tm_bubbles(scale = .5, col = "black", border.col = "black")+
-  tm_shape(low_do_sites)+tm_bubbles(scale = .5, col = "blue", border.col = "black")+
+  #tm_shape(low_do_sites)+tm_bubbles(scale = .5, col = "blue", border.col = "black")+
   tm_shape(bad_sites)+tm_bubbles(scale = .5, col = "firebrick1", border.col = "black")+
   tm_scale_bar(breaks = c(0, 15, 30), position = c("left", "bottom"), text.size = 1)+
   tm_add_legend(type = "symbol", labels = c("Low DO", "Bad trawl", "Normoxic"), 
@@ -46,8 +46,34 @@ sites_tmap <- tm_shape(us_and_can, bbox = wb_bounds)+tm_fill()+ #plot land
 
 tmap_save(sites_tmap,
           filename = paste("figures/maps/trawl sites map ", this_year, ".png", sep = ""), 
-          width = 5, height = 4, units = "in")
+          width = 5, height = 4, units = "in", dpi = 500)
 
+ggplot(data = trawl_sites)+
+  scale_x_continuous(limits = c(wb_bounds["xmin"], wb_bounds["xmax"]))+
+  scale_y_continuous(limits = c(wb_bounds["ymin"], wb_bounds["ymax"]))+
+  geom_sf(data = us_and_can, fill = "lightyellow2")+
+  geom_sf(data = lake_erie, fill = "#c5dfed")+
+  geom_sf(aes(fill = status), color = "black", shape = 21)+
+  geom_sf(data = state_border, lty = 3)+
+  scale_fill_manual(name = "Effort status",
+                      values = c("blue", "orangered", "black"),
+                      breaks = c("low_do", "bad_trawl", "ok_do"),
+                    labels = c("Hypoxic", "Bad", "Good"))+
+  ggsn::scalebar(dist = 15, model = "WGS84",location = "topright", dist_unit = "km", 
+                 x.min = wb_bounds["xmin"], y.min = wb_bounds["ymin"], 
+                 x.max = wb_bounds["xmax"], y.max = wb_bounds["ymax"],
+                 st.dist = .03, anchor = c(x = -83.2, y = 41.4), transform = TRUE,
+                 border.size = .5, st.size = 3, family = "Times New Roman")+
+  ggsn::north(x.min = wb_bounds["xmin"], y.min = wb_bounds["ymin"], 
+              x.max = wb_bounds["xmax"], y.max = wb_bounds["ymax"],
+              location = "topright", symbol = 3, anchor = c(x = -83.33, y = 41.5))+
+  theme_minimal()+
+  theme(axis.text = element_blank(), axis.title = element_blank(),
+        plot.background = element_rect(fill = "white", color = NA),
+        text = element_text(family = "Times New Roman"))
+
+ggsave(filename = paste0("figures/maps/", this_year, " effort map.png"),
+       width=7, height=5, units="in", dpi=400, pointsize=12)
 
 #### Interactive map   #########################
 library(mapview); library(RColorBrewer); library(leafem); library(leaflet)
@@ -69,12 +95,3 @@ all_effort %>%
 mapview(trawl_sites, 
         #zcol = "botoxy", layer.name = "DO", at = c(0,2,4,10),
         zcol = "crn")
-
-
-### Catch map   ##########################################
-target_species = 301
-
-all_catch %>%
-  left_join(all_effort %>% select(yrsam, year, longitude, latitude)) %>%
-  filter(species == target_species, year == 2021) %>% 
-  st_as_sf(coords = c("longitude", "latitude"), crs = 4326)

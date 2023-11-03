@@ -26,66 +26,46 @@ forage %<>% mutate(basin = case_when(agency == "ON" ~ "LPB", T ~ basin))  # conv
 forage %>%
   group_by(basin, agency) %>%
   summarize(total_num = n())
-
-# years of data by agency (if they're not close within basin, will throw off trends these graphs are 2000-present)
-forage %>%
-  filter(species == "Rainbow Smelt" & age_class == "YOY" & year > 1999) %>%
-  group_by(basin, agency) %>%
-  summarize(total_years = sum(!is.na((abundance_per_ha))))
-
-# do EB trawls correlate? NOPE
-eb_data_comp <- forage %>%
-  filter(basin %in% c("EB", "LPB")) %>% 
-  mutate(abundance_per_ha = abundance_per_ha+.001) %>%
-  spread(key = agency, value = abundance_per_ha) %>%
-  filter(!is.na(NY))
-
-eb_data_comp %>%
-  ggplot(aes(x = NY, y = ON))+
-  stat_smooth(method = "lm", color = "red")+
-  geom_point(size = 2)+
-  facet_grid(species ~ age_class)+
-  theme_minimal()+
-  scale_x_log10()+
-  scale_y_log10()
+# 
+# # years of data by agency (if they're not close within basin, will throw off trends these graphs are 2000-present)
+# forage %>%
+#   filter(species == "Rainbow Smelt" & age_class == "YOY" & year > 1999) %>%
+#   group_by(basin, agency) %>%
+#   summarize(total_years = sum(!is.na((abundance_per_ha))))
+# 
+# # do EB trawls correlate? NOPE
+# eb_data_comp <- forage %>%
+#   filter(basin %in% c("EB", "LPB")) %>% 
+#   mutate(abundance_per_ha = abundance_per_ha+.001) %>%
+#   spread(key = agency, value = abundance_per_ha) %>%
+#   filter(!is.na(NY))
+# 
+# eb_data_comp %>%
+#   ggplot(aes(x = NY, y = ON))+
+#   stat_smooth(method = "lm", color = "red")+
+#   geom_point(size = 2)+
+#   facet_grid(species ~ age_class)+
+#   theme_minimal()+
+#   scale_x_log10()+
+#   scale_y_log10()
 
 #because of this, plot NY and ON LPB surveys separate 
 
 # Trim data - remove MI (sorry Jan) and years before 2000
 forage <- forage %>% filter(year > 1999, agency != "MI")
 
-### Abundance Plots by Species  ######################
-
-# theme with dark background and light colors for best PPT presentations
-inverse_theme <- function(){theme_transparent()+
-    theme(legend.position = "top",
-          rect = element_rect(fill = NA),
-          axis.title = element_text(size=18, color = "white"), 
-          axis.text.y=element_text(size=18), 
-          axis.text.x=element_text(size=18, vjust=.1), 
-          axis.line = element_line(color = "white"),
-          axis.ticks = element_line(color = "white"),
-          panel.background = element_blank(),
-          panel.border = element_blank(),
-          panel.grid = element_blank(),
-          plot.background = element_rect(fill = "#001F3A"),
-          plot.title = element_text(color = "grey30", size = 10, face = "italic"),
-          legend.text = element_text(size = 18, color = "white"),
-          legend.title = element_text(size = 18, color = "white"), 
-          legend.key.width = unit(20, "mm"),
-          strip.background = element_blank(),
-          strip.text = element_text(size = 18, color = "white"),
-          axis.text = element_text(color = "white"))}
-
 ### PreLEC/LEC - West Basin Abundance by forage group  #####################
-source("4_abundance graphs.R")
+source("graph - abundance.R")
+
 density_by_group+
   inverse_theme()+
   geom_area(position = "stack", color = "white")+
   theme(plot.background = element_rect(fill = "#003D73"))
 
-ggsave("figures/whole lake/abundance - WB by group.png", 
-       width = 10, height = 6.5, units = "in",dpi = 600)
+ggsave("figures/whole lake/abundance - WESTERN BASIN-IA by group.png", 
+       width = 13.5, height = 6.5, units = "in",dpi = 600)
+
+### Abundance Plots by Species  ######################
 
 # colors for different basins - trying to fine tune so they are most visible/distinguishable 
 # and don't look like shit
@@ -93,6 +73,8 @@ test_colors <- c("#51C1AB", "#FFD56B", "#6371C9", "#FFA56B")
 new_colors <- c("#68affc", "#ff864a", "#fffa66", "white")
 colors <- new_colors
 line_types = c(1, 2, 1, 95) #line types across all line graphs
+width_print = 13.3 #fucking LEC making us put video in the bottom right corner where the trends are
+height_print = 5.1
 
 scales::show_col(new_colors)
 
@@ -114,7 +96,7 @@ smelt_yoy <- forage %>%
 
 
 ggsave(plot = smelt_yoy, "figures/whole lake/abundance - smelt YOY.png", 
-       width = 10, height = 6.5, units = "in",dpi = 600)
+       width = width_print, height = height_print, units = "in",dpi = 600)
 
 
 # Smelt adult
@@ -133,17 +115,18 @@ smelt_adult <- forage %>%
   labs(x="", y="Fish/ha", title = "Rainbow Smelt YAO")+
   inverse_theme()
 
-ggsave(plot = smelt_adult, "figures/whole lake/abundance - smelt adult.png", width = 10, height = 6.5, units = "in",dpi = 600)
+ggsave(plot = smelt_adult, "figures/whole lake/abundance - smelt adult.png", 
+       width = width_print, height = height_print, units = "in",dpi = 600)
 
 
 # Shiner TOTAL
 shiner <- forage %>%
   filter(species == "Emerald Shiner" & !is.na(abundance_per_ha)) %>%
   group_by(year, basin) %>%
-  summarize(mean_abundance = mean(abundance_per_ha)) %>%
+  summarize(total_abundance = sum(abundance_per_ha)) %>%
   ungroup %>%
   mutate(basin = fct_relevel(basin, "WB", "CB", "EB", "LPB")) %>%
-  ggplot(aes(x = year, y = mean_abundance, color = basin, lty = basin))+
+  ggplot(aes(x = year, y = total_abundance, color = basin, lty = basin))+
   geom_line(lwd = 2)+
   scale_x_continuous(expand = c(0,.5), breaks = seq(1988,this_year,by=3), limits = c(2000, this_year))+
   scale_y_continuous(expand = c(0,0))+
@@ -152,7 +135,7 @@ shiner <- forage %>%
   labs(x="", y="Fish/ha", title = "Emerald Shiner All Ages")+
   inverse_theme()
 
-ggsave(plot = shiner, "figures/whole lake/abundance - shiner ALL AGES.png", width = 10, height = 6.5, units = "in",dpi = 600)
+ggsave(plot = shiner, "figures/whole lake/abundance - shiner ALL AGES.png", width = width_print, height = height_print, units = "in",dpi = 600)
 
 
 # Shad YOY
@@ -171,7 +154,7 @@ shad_yoy <- forage %>%
   labs(x="", y="Fish/ha", title = "Gizzard Shad YOY")+
   inverse_theme()
 
-ggsave(plot = shad_yoy, "figures/whole lake/abundance - shad YOY.png", width = 10, height = 6.5, units = "in",dpi = 600)
+ggsave(plot = shad_yoy, "figures/whole lake/abundance - shad YOY.png", width = width_print, height = height_print, units = "in",dpi = 600)
 
 # Goby
 goby_all <- forage %>%
@@ -189,7 +172,8 @@ goby_all <- forage %>%
   labs(x="", y="Fish/ha", title = "Round Goby")+
   inverse_theme()
 
-ggsave(plot = goby_all, "figures/whole lake/abundance - goby all.png", width = 10, height = 6.5, units = "in",dpi = 600)
+ggsave(plot = goby_all, "figures/whole lake/abundance - goby all.png", 
+       width = width_print, height = height_print, units = "in",dpi = 600)
 
 
 
@@ -232,7 +216,7 @@ smelt_yoy_percent <- forage_ranked %>%
   inverse_theme()
 
 ggsave(plot = smelt_yoy_percent, "figures/whole lake/percentile - smelt YOY.png", 
-       width = 10, height = 6.5, units = "in", dpi = 600)
+       width = width_print, height = height_print, units = "in", dpi = 600)
 
 
 # Smelt adult
@@ -253,7 +237,7 @@ smelt_adult_percent <- forage_ranked %>%
   labs(x="", y="Percentile rank (% relative to 50%)", title = "Rainbow Smelt adult")+
   inverse_theme()
 
-ggsave(plot = smelt_adult_percent, "figures/whole lake/percentile - smelt adult.png", width = 10, height = 6.5, units = "in",dpi = 600)
+ggsave(plot = smelt_adult_percent, "figures/whole lake/percentile - smelt adult.png", width = width_print, height = height_print, units = "in",dpi = 600)
 
 # shiner All Ages
 shiner_percent <- forage_ranked %>%
@@ -274,7 +258,7 @@ shiner_percent <- forage_ranked %>%
   inverse_theme()
 
 ggsave(plot = shiner_percent, "figures/whole lake/percentile - shiner ALL AGES.png", 
-       width = 10, height = 6.5, units = "in",dpi = 600)
+       width = width_print, height = height_print, units = "in",dpi = 600)
 
 # shad YOY
 shad_yoy_percent <- forage_ranked %>%
@@ -294,7 +278,7 @@ shad_yoy_percent <- forage_ranked %>%
   labs(x="", y="Percentile rank (% relative to 50%)", title = "Gizzard Shad YOY")+
   inverse_theme()
 
-ggsave(plot = shad_yoy_percent, "figures/whole lake/percentile - shad YOY.png", width = 10, height = 6.5, units = "in",dpi = 600)
+ggsave(plot = shad_yoy_percent, "figures/whole lake/percentile - shad YOY.png", width = width_print, height = height_print, units = "in",dpi = 600)
 
 # Goby all
 goby_percent <- forage_ranked %>%
@@ -314,7 +298,7 @@ goby_percent <- forage_ranked %>%
   labs(x="", y="Percentile rank (% relative to 50%)", title = "Round Goby")+
   inverse_theme()
 
-ggsave(plot = goby_percent, "figures/whole lake/percentile - goby.png", width = 10, height = 6.5, units = "in",dpi = 600)
+ggsave(plot = goby_percent, "figures/whole lake/percentile - goby.png", width = width_print, height = height_print, units = "in",dpi = 600)
 
 
 
@@ -362,7 +346,7 @@ total_forage_all_basins
 
 ggsave(plot = total_forage_all_basins, 
        "figures/whole lake/total forage abundance, all basins.png", 
-       width = 10, height = 6.5, units = "in",dpi = 600)
+       width = 13.5, height = 6.5, units = "in",dpi = 600)
 
 # cut down to just last 5 years
 sole_graph <- total_forage_all_basins+

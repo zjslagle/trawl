@@ -20,6 +20,7 @@ clean_units <- function(x){
 #read in shapefiles
 states = st_read(paste(map_folder, "ne_10m_admin_1_states_provinces.shp", sep = ""))
 states %>% filter(gu_a3 == "CAN"|gu_a3 == "USA"|gu_a3 == "MEX") -> us_and_can #filter out US and CAN only
+state_border = st_read(paste0(map_folder, "erieborder.shp")) %>% st_set_crs(4326)
 lake_erie = st_read(paste(map_folder, "Lake_Erie_Shoreline.shp", sep = "")) #not sure where this came from but it's detailed - maybe G Steinhart's files
 feature_names = st_read(paste(map_folder, "ne_10m_populated_places.shp", sep = ""))
 feature_names %>% filter(NAME %in% c("Toledo", "Detroit")) -> feature_names #label for Toledo, must subset so BG doesn't show up

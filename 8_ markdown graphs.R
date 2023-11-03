@@ -15,8 +15,8 @@ for(i in 1:length(groups_to_graph)){
           axis.text.y=element_text(size=14, color = "black"), 
           axis.text.x=element_text(size=14, vjust=1, color = "black"), 
           axis.line = element_line(color = "black"), 
-          panel.background = element_blank(), 
-          text = element_text(family = "Times")) +
+          panel.background = element_blank(),
+          text = element_text(family = "Times New Roman")) +
     scale_x_continuous(expand = c(0,.5), breaks = seq(1988,this_year,by=5))+
     scale_y_continuous(expand = c(0,0))+
     labs(x="", y="Fish/ha")
@@ -38,7 +38,9 @@ density_by_group <- yearly_abundance_tall %>%
         axis.text.y=element_text(size=14, color = "black"), 
         axis.text.x=element_text(size=14, vjust=1, color = "black"), 
         axis.line = element_line(color = "black"), 
-        panel.background = element_blank(), text = element_text(family = "Times"), legend.position = "top",
+        panel.background = element_blank(),
+        text = element_text(family = "Times New Roman"), 
+        legend.position = "top",
         legend.text = element_text(size = 12)) +
   scale_x_continuous(expand = c(0,0), breaks = seq(1988,this_year,by=5))+
   scale_y_continuous(expand = c(0,0))+

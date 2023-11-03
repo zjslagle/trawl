@@ -127,10 +127,10 @@ biomass_summary_by_site <- combo_length_data %>%
          biomass_per_area = total_weight/area_swept) # units are per grams per m2
 
 # Output biomass by site - test for now
- write_csv(biomass_summary_by_site %>% #filter(year == 2021, species == 331, agecode == 1) %>%
-             select(year, crn, yrsam, species, agecode, agency, total_weight, area_swept, ha_swept, biomass_per_area) %>%
-              mutate(kg_per_ha = biomass_per_area*10),
-             "data derived/IA Biomass by CRN.csv")
+ # write_csv(biomass_summary_by_site %>% #filter(year == 2021, species == 331, agecode == 1) %>%
+ #             select(year, crn, yrsam, species, agecode, agency, total_weight, area_swept, ha_swept, biomass_per_area) %>%
+ #              mutate(kg_per_ha = biomass_per_area*10),
+ #             "data derived/IA Biomass by CRN.csv")
 
 
 
@@ -168,20 +168,20 @@ yearly_biomass_by_agency <- biomass_summary_by_site %>%
                                                                   depth_strata == "all_depths" ~ mean_biomass_g * 1.4121e+09),
                                      country == "US" ~ case_when(depth_strata == "shallow" ~ mean_biomass_g * 9.281E+8,
                                                                  depth_strata == "deep" ~ mean_biomass_g * 1.413E+9))) %>%
-  select(-mean_biomass_g)                                 # basinwide area = 3.7532e+09 m2
+  select(-mean_biomass_g)                   # basinwide area = 3.7532e+09 m2 or 375320 ha
 
 #sum across lake and state
 biomass_summary_all_spp_by_state <- yearly_biomass_by_agency %>%
   group_by(year, country, species, agecode) %>%
-    summarize(total_biomass_mt = sum(total_biomass_g)/1000000) %>% #convert to metric tons
+    summarize(total_biomass_kg_ha = (sum(total_biomass_g)/1000)/375320) %>% #convert to kg/ha
   arrange(country, year) %>%
   left_join(spp_codes %>% select(-latin_name)) %>%
   left_join(forage_groups)
 
 #Biomass by species across lake
-biomass_summary_all_spp <- biomass_summary_all_spp_by_state %>%
+biomass_summary_all_spp <- yearly_biomass_by_agency %>%
   group_by(year, species, agecode) %>%
-  summarize(total_biomass_mt = sum(total_biomass_mt)) %>% #convert to metric tons
+    summarize(total_biomass_kg_ha = (sum(total_biomass_g)/1000)/375320) %>% #convert to kg/ha
   arrange(species, agecode, year) %>%
   left_join(spp_codes %>% select(-latin_name))
 
@@ -191,43 +191,35 @@ biomass_summary_all_spp %>%
 
 
 # total biomass
-biomass_summary_total <- biomass_summary_all_spp_by_state %>%
+biomass_summary_total <- biomass_summary_all_spp %>%
+  left_join(forage_groups) %>%
   filter(!is.na(group)) %>%
   group_by(year) %>%
-    summarize(total_biomass_mt = sum(total_biomass_mt)) %>%
+    summarize(total_biomass_kg_ha = sum(total_biomass_kg_ha)) %>%
   ungroup() %>%
   mutate(group = "all_forage")
 
 # biomass by functional group (spiny rayed, soft rayed, clupeid), join total
-biomass_summary_groups <- biomass_summary_all_spp_by_state %>%
+biomass_summary_groups <- biomass_summary_all_spp %>%
+  left_join(forage_groups) %>%
   group_by(year, group) %>%
-    summarize(total_biomass_mt = sum(total_biomass_mt)) %>%
+    summarize(total_biomass_kg_ha = sum(total_biomass_kg_ha)) %>%
   ungroup() %>%
   filter(!is.na(group)) %>%
   bind_rows(biomass_summary_total)
 
 
 ### Output biomass into older formats   ########################################
-# reshape into older format - forage groups by country in wide format
-biomass_summary_all_spp_by_state %>%
-  group_by(year, country, group) %>%
-    summarize(total_biomass_mt = sum(total_biomass_mt)) %>%
-  ungroup() %>%
-  filter(!is.na(group)) %>%
-  pivot_wider(names_from = group,
-              values_from = total_biomass_mt) %>%
-  mutate(total = clupeid + soft_ray + spiny_ray) %>%
-  arrange(country, year) %>%
-  write_csv("data derived/West Basin biomass estimates by agency.csv")
 
 # reshape into older format - forage groups Total/Basinwide in wide format
-biomass_summary_all_spp_by_state %>%
+biomass_summary_all_spp %>%
+  left_join(forage_groups) %>%
   group_by(year, group) %>%
-  summarize(total_biomass_mt = sum(total_biomass_mt)) %>%
+  summarize(total_biomass_kg_ha = sum(total_biomass_kg_ha)) %>%
   ungroup() %>%
   filter(!is.na(group)) %>%
   pivot_wider(names_from = group,
-              values_from = total_biomass_mt) %>%
+              values_from = total_biomass_kg_ha) %>%
   mutate(total = clupeid + soft_ray + spiny_ray) %>%
   arrange(year) %>%
   write_csv("data derived/West Basin biomass estimates Basinwide.csv")

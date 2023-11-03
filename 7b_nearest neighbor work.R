@@ -33,7 +33,7 @@ cpha_combo <- cpha_hypoxia %>%
             log_cpha = log(cpha+.000001))
 
 
-# first, plot it!
+# plot it!
 cpha_combo %>%
   ggplot(aes(x = do_category_nn, y = cpha, fill = do_category_nn))+
   geom_boxplot(outlier.shape = NA)+
@@ -57,3 +57,20 @@ ggsave("figures/hypoxia adjusted/boxplot - nearest neighbor comparison.png",
 
 table(cpha_combo$do_category_trawl, cpha_combo$do_category_nn)
 
+# Powerpoint plot
+cpha_combo %>%
+  ggplot(aes(x = do_category_nn, y = cpha, fill = do_category_nn))+
+  geom_boxplot(outlier.shape = NA, color = "white", linewidth = 1)+
+  geom_jitter(width = .3, color = "white", alpha = .5)+
+  facet_wrap(. ~ do_category_trawl)+
+  scale_y_log10()+
+  scale_fill_manual(breaks = c("Normoxic", "Hypoxic"),
+                    values = c("green3", "lightskyblue"))+
+  labs(x = "Nearest Neighbor", y = "Total catch per ha", title = "Trawl Status",
+       fill = "")+
+  inverse_theme()+
+  theme(plot.title = element_text(color = "white", face = "bold", size = 16),
+        legend.position = "none")
+
+ggsave("figures/hypoxia adjusted/boxplot - nearest neighbor comparison POWERPOINT.png",
+       width = 13.5, height = 6, units = "in", dpi = 500)

@@ -6,7 +6,7 @@ knit: (function(inputFile, encoding) {
       rmarkdown::render(inputFile,
                         encoding=encoding,
                         output_options = list(toc = TRUE),
-                        output_file=file.path(dirname(inputFile), "Reports", 'Western Basin Interagency Trawl Summary 2022.pdf')) })
+                        output_file=file.path(dirname(inputFile), "Reports", 'Western Basin Interagency Trawl Summary 2023.pdf')) })
 ---
 
 ```{r setup, include=FALSE}
@@ -20,63 +20,73 @@ source("8_markdown summaries.R", local = knitr::knit_global()) #ignore for now
   
   
 ### Methods 
-  Briefly, trawl catches are transformed to catch per hectare using trawl distance and SCANMAR-derived, vessel-specific wing widths. Fishing Power Corrections are applied to catches from the ODNR R/V *Explorer* (1988–2002) and *Explorer II* (2003–present) to correct those vessels' fishing power to the OMNRF R/V *Keenosay* (Tyson et al. 2006). Catch-per-hectare is then extrapolated up to country- and depth-specific strata area and then divided by the total basin area to yield a basinwide abundance estimate (in fish per hectare).
+  Briefly, trawl catches are transformed to catch per hectare using trawl distance and SCANMAR-derived, vessel-specific wing widths. Fishing Power Corrections are applied to catches from the ODNR R/V *Explorer* (1988–2002) and *Explorer* (2003–present; same name, different vessel) to correct those vessels' fishing power to the OMNRF R/V *Keenosay* (Tyson et al. 2006). Catch-per-hectare is then extrapolated up to country- and depth-specific strata area and then divided by the total basin area to yield a basinwide abundance estimate (in fish per hectare).
 
 ## Trawl Effort
-![](figures/trawl sites map 2022.png)
+![](figures/maps/2023 effort map.png)
 
-Ontario and Ohio combined to attempt `r effort_summary$trawl_sites` trawl sites in August `r this_year`, of which `r effort_summary$low_do_sites` sites were removed due to hypoxia (<2.0 mg/L; red points). In total, `r effort_summary$good_trawl_sites` sites were used in this year's index summaries.
+Ontario and Ohio combined to attempt `r effort_summary$trawl_sites` trawl sites in August `r this_year`, of which `r effort_summary$low_do_sites` sites were removed due to hypoxia (<2.0 mg/L; blue points) and `r effort_summary$bad_trawl_sites` were removed due to gear issues. In total, `r effort_summary$good_trawl_sites` sites were used in this year's index calculations.
 
 \newpage
 
 ## Walleye Indices
 
-### Young-of-year
+### Young-of-year index
 ![Young-of-year Walleye catch per hectare, Western Basin Lake Erie](figures/markdown/markdown abundance 334_1.png)
-The Western Basin YOY Walleye index in `r this_year` was moderate (`r abund$abundance[which(abund$spp_agegroup == "334_1")]` fish/ha) compared to recent years, but strong compared to the overall time series. This is the `r ranks$rank[which(ranks$spp_agegroup == "334_1")]` greatest year class since 1988.
+The Western Basin YOY Walleye index in `r this_year` was moderate (`r abund$abundance[which(abund$spp_agegroup == "334_1")]` fish/ha) compared to recent years but strong compared to the overall time series. This is the `r ranks$rank[which(ranks$spp_agegroup == "334_1")]` greatest year class since 1988.
 
-### Yearling
+### Young-of-year catch map
+![](figures/maps/percid indices/age-0 334 map.png)
+
+Catches of age-0 Walleye were concentrated in Ontario waters, spread across the central and eastern portions of their jurisdiction. Ohio catches have been transformed to R/V *Keenosay* catch efficiency using FPCs.
+
+### Yearling index
 ![](figures/markdown/markdown abundance 334_2.png)
 
-The yearling Walleye index was also moderate (`r abund$abundance[which(abund$spp_agegroup == "334_2")]` fish/ha) compared to recent years, but strong compared to the overall time series. This is the `r ranks$rank[which(ranks$spp_agegroup == "334_2")]` greatest yearling year class since 1988.
+The yearling Walleye index was also moderate (`r abund$abundance[which(abund$spp_agegroup == "334_2")]` fish/ha) compared to recent years but strong compared to the overall time series. This is the `r ranks$rank[which(ranks$spp_agegroup == "334_2")]` greatest yearling year class since 1988.
 \newpage
 
-## Yellow Perch
+## Yellow Perch Indices
 
-### Young-of-year
+### Young-of-year index
 ![](figures/markdown/markdown abundance 331_1.png)
 
-The Western Basin YOY Yellow Perch index in `r this_year` was once again strong (`r abund$abundance[which(abund$spp_agegroup == "331_1")]` fish/ha), adding to the consistent hatches observed in the Western Basin for nearly a decade. This is the `r ranks$rank[which(ranks$spp_agegroup == "331_1")]` greatest year class since 1988.
+The Western Basin YOY Yellow Perch index in `r this_year` was somewhat low compared to the last 10 years (`r abund$abundance[which(abund$spp_agegroup == "331_1")]` fish/ha) but was moderately strong compared to the time series. This is the `r ranks$rank[which(ranks$spp_agegroup == "331_1")]` greatest year class since 1988.
 
-### Yearling
-![](figures/markdown/markdown abundance 331_2.png)
+### Young-of-year catch map
+![](figures/maps/percid indices/age-0 331 map.png)
 
-The yearling Yellow Perch index was strong (`r abund$abundance[which(abund$spp_agegroup == "331_2")]` fish/ha), the highest abundance since 2019. This is the `r ranks$rank[which(ranks$spp_agegroup == "331_2")]` greatest yearling year class since 1988.
+Catches of age-0 Yellow Perch were concentrated in Ontario waters, particularly near Pidgeon Bay (west of Point Pelee). Ohio catches have been transformed to R/V *Keenosay* catch efficiency using FPCs.
+
+<!-- Comment this back in when yearling index is fixed! -->
+<!-- ### Yearling -->
+<!-- ![](figures/markdown/markdown abundance 331_2.png) -->
+
+<!-- The yearling Yellow Perch index was strong (`r abund$abundance[which(abund$spp_agegroup == "331_2")]` fish/ha), the highest abundance since 2019. This is the `r ranks$rank[which(ranks$spp_agegroup == "331_2")]` greatest yearling year class since 1988. -->
 
 \newpage
 
-## Total Forage
+## Total Forage Index
 
 ![](figures/markdown/markdown abundance by forage group.png)
 
-Total forage density in `r this_year` returned to the lower levels (`r abund$abundance[which(abund$spp_agegroup == "all_forage")]` fish/ha) typical of 2019–2020.
- As usual, forage makeup was dominated by spiny-rayed prey (e.g., White Perch, Yellow Perch, and Walleye; `r abund$abundance[which(abund$spp_agegroup == "spiny_ray")]` fish/ha). Note that 2021 catches were skewed due to a hypoxia-related outlier catch.
+Total forage density in `r this_year` was typical of the last five years (`r abund$abundance[which(abund$spp_agegroup == "all_forage")]` fish/ha) and somewhat greater than last year. As usual, forage makeup was dominated by spiny-rayed prey (e.g., White Perch, Yellow Perch, and Walleye; `r abund$abundance[which(abund$spp_agegroup == "spiny_ray")]` fish/ha). Note that 2021 catches were skewed due to a hypoxia-related outlier catch.
 
 \newpage
 
-## Major Forage Species
+## Major Forage Species Indices
 ### Young-of-year White Perch
 
 ![](figures/markdown/markdown abundance 301_1.png)
 
-YOY White Perch abundance (`r abund$abundance[which(abund$spp_agegroup == "301_1")]` fish/ha) was moderate compared to recent years. White Perch abundance returned to 2019–2020 values after an outlier year in 2021, less than half of the ten-year mean abundance (`r abund$ten_year_mean[which(abund$spp_agegroup == "301_1")]` fish/ha).
+YOY White Perch abundance (`r abund$abundance[which(abund$spp_agegroup == "301_1")]` fish/ha) was somewhat high compared to recent years - about two-thirds of the ten-year mean abundance (`r abund$ten_year_mean[which(abund$spp_agegroup == "301_1")]` fish/ha).
 
 
 ### Young-of-year Gizzard Shad
 
 ![](figures/markdown/markdown abundance 63_1.png)
 
-YOY Gizzard Shad abundance (`r abund$abundance[which(abund$spp_agegroup == "63_1")]` fish/ha) was average compared to recent years but low compared to the time series;  abundance was down 88.6% compared to the ten-year mean abundance (`r abund$ten_year_mean[which(abund$spp_agegroup == "63_1")]` fish/ha).
+YOY Gizzard Shad abundance (`r abund$abundance[which(abund$spp_agegroup == "63_1")]` fish/ha) was average compared to recent years but low compared to the time series;  abundance was down compared to the ten-year mean (`r abund$ten_year_mean[which(abund$spp_agegroup == "63_1")]` fish/ha).
 
 \newpage
 
@@ -98,16 +108,47 @@ Adult (ages-1+) Emerald Shiner abundance (`r abund$abundance[which(abund$spp_age
 
 ![](figures/markdown/markdown abundance 366_5.png)
 
-Round Goby abundance across all ages (`r abund$abundance[which(abund$spp_agegroup == "366_5")]` fish/ha) was down from 2021 but was near the 10 year mean (`r abund$ten_year_mean[which(abund$spp_agegroup == "366_5")]` fish/ha).
+Round Goby abundance across all ages (`r abund$abundance[which(abund$spp_agegroup == "366_5")]` fish/ha) has declined for two years, about half of the 10 year mean (`r abund$ten_year_mean[which(abund$spp_agegroup == "366_5")]` fish/ha).
 
 \newpage
 
 ## Other Catches of Note
-### Young-of-year Spottail Shiner
+### Young-of-year White Bass
 
-![](figures/markdown/markdown abundance 201_1.png)
+![](figures/markdown/markdown abundance 302_1.png)
 
-YOY Spottail Shiner abundance (`r abund$abundance[which(abund$spp_agegroup == "201_1")]` fish/ha) was high compared to recent years and was the second greatest since 2010.
+YOY White Bass abundance (`r abund$abundance[which(abund$spp_agegroup == "302_1")]` fish/ha) rebounded from recent lows, although abundance remains low compared to the ten year mean (`r abund$ten_year_mean[which(abund$spp_agegroup == "302_1")]` fish/ha)
+
+### Young-of-year Freshwater Drum
+
+![](figures/markdown/markdown abundance 371_1.png)
+
+YOY Freshwater Drum abundance (`r abund$abundance[which(abund$spp_agegroup == "371_1")]` fish/ha) was low compared to recent years, continuing a pattern of booms and busts.
+
+
+### Young-of-year Trout-perch
+
+![](figures/markdown/markdown abundance 291_1.png)
+
+YOY Trout Perch abundance (`r abund$abundance[which(abund$spp_agegroup == "291_1")]` fish/ha) was also high, the second greatest year class since 2005.
+
+### Adult Trout-perch
+
+![](figures/markdown/markdown abundance 291_3.png)
+
+Adult Trout Perch were also found in high abundance (`r abund$abundance[which(abund$spp_agegroup == "291_3")]` fish/ha) was also high, the largest catches since 2005.
+
+### Young-of-year Silver Chub
+
+![](figures/markdown/markdown abundance 191_1.png)
+
+YOY Silver Chub abundance (`r abund$abundance[which(abund$spp_agegroup == "191_1")]` fish/ha) was very high in `r this_year`, the greatest year class since 1999.
+
+### Young-of-year Mimic Shiner
+
+![](figures/markdown/markdown abundance 206_1.png)
+
+YOY Mimic Shiner abundance (`r abund$abundance[which(abund$spp_agegroup == "206_1")]` fish/ha) continued its climb, having increased every year for the last five.
 
 \newpage
 

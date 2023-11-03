@@ -19,12 +19,14 @@ require(lubridate)
 require(stringr)
 require(beepr)
 require(readxl)
+require(ggpubr)
+
 library(tidyverse)
 
 options(warn = 0) #warnings back on
 
 
-this_year = year(now())-1 #get this year
+this_year = year(now())#-1 #get this year
 windowsFonts(Times=windowsFont("Times New Roman"))
 
 #read in species codes/common names and grouping (diff files b/c need to split some age-0 fish into forage groups)
@@ -37,19 +39,25 @@ agecodes = tibble(agecode = 1:5,
 # Need to use the "parsed" database - OMNRF initially classifies many of their intermediate-sized fish as agecode 5, then
 # parses/allocates these fish afterwards into agecode 1 or 3 based on... length I guess? Need to ask Andy Cook.  
 #trawl_database <- odbcConnectAccess2007("data sources/ON21parse_OH21_ERIEWEST_TRAWL_IN_OH_FMT_Nov23.accdb")
-trawl_database <- odbcConnectAccess2007("data sources/ON22parse_OH22_ERIEWEST_TRAWL_IN_OH_FMT_Nov15_22.accdb")
-
-#list tables in trawl database
-sqlTables(trawl_database)
-
-#read in required data from trawl - note that if you don't use as_tibble, sqlFetch() returns an odd
-#     tbl with sqlFetch(trawl_database, "OH Lengths") as the one obs
-all_lengths_raw <- as_tibble(sqlFetch(trawl_database, "LENGTH"))
-all_catch_raw <- as_tibble(sqlFetch(trawl_database, "CATCH"))
+trawl_database <- odbcConnectAccess2007("data sources/ON23parse_OH23_ERIEWEST_TRAWL_IN_OH_FMT_Oct30_23.accdb")
+# 
+# #list tables in trawl database
+# sqlTables(trawl_database)
+# 
+# #read in required data from trawl - note that if you don't use as_tibble, sqlFetch() returns an odd
+# #     tbl with sqlFetch(trawl_database, "OH Lengths") as the one obs
 all_effort_raw <- as_tibble(sqlFetch(trawl_database, "EFFORT"))
-
-#close connection to DB
+all_catch_raw <- as_tibble(sqlFetch(trawl_database, "CATCH"))
+all_lengths_raw <- as_tibble(sqlFetch(trawl_database, "LENGTH"))
+# 
+# #close connection to DB
 odbcCloseAll()
+
+
+### Excel read-in - janky fix to Access driver issue ################################################
+# all_effort_raw <- read_xlsx("data sources/database excel files/EFFORT.xlsx")
+# all_catch_raw <- read_xlsx("data sources/database excel files/CATCH.xlsx")
+# all_lengths_raw <- read_xlsx("data sources/database excel files/LENGTH.xlsx")
 
 
 ### Reformat data    ##############################
@@ -122,7 +130,7 @@ all_catch <- all_catch %>%
   mutate(projcode = case_when(projcode %in% c("LEA-IF00_001","LEA_IF00-001") ~ "LEA_IF00_001",
                               T ~ projcode)) %>% #fix mismatch between underscores and dashes
   left_join(all_effort %>% 
-              select(projcode, year, agency, yrsam, crn, depth, effdur, effdist, effstat, botoxy) %>% 
+              select(yrsam, crn, effdist, effstat, botoxy) %>% 
               unique) %>%                                              #THESE MUST BE UNIQUE VALUES
   mutate(effstat = case_when(botoxy < 2 & year %in% c(2009:2012, 2016:this_year) ~ 0,
                              is.na(botoxy) & year %in% c(2009:2012, 2016:this_year) ~ 1, #This matches ON/Andy's summary - I believe he still uses NA botoxy
@@ -177,4 +185,25 @@ all_catch %>%
             n_total = n(),
             n_na_effdist = sum(is.na(effdist) & effstat == 1))
 
-beep(2)
+# theme with dark background and light colors for best PPT presentations
+inverse_theme <- function(){theme_transparent()+
+    theme(legend.position = "top",
+          rect = element_rect(fill = NA),
+          axis.title = element_text(size=18, color = "white"), 
+          axis.text.y=element_text(size=18), 
+          axis.text.x=element_text(size=18, vjust=.1), 
+          axis.line = element_line(color = "white"),
+          axis.ticks = element_line(color = "white"),
+          panel.background = element_blank(),
+          panel.border = element_blank(),
+          panel.grid = element_blank(),
+          plot.background = element_rect(fill = "#001F3A"),
+          plot.title = element_text(color = "grey30", size = 10, face = "italic"),
+          legend.text = element_text(size = 18, color = "white"),
+          legend.title = element_text(size = 18, color = "white"), 
+          legend.key.width = unit(20, "mm"),
+          strip.background = element_blank(),
+          strip.text = element_text(size = 18, color = "white"),
+          axis.text = element_text(color = "white"))}
+
+

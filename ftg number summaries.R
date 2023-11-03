@@ -48,27 +48,37 @@ ggsave("figures/low DO trawl count over time.png", width = 7, height = 5, units 
 
 ### Total abundance and spp functional group differences  ##################################
 # comparisons to 10 yr mean and last year
-yearly_abundance_tall %>%
+percent_diff_groups <- yearly_abundance_tall %>%
   filter(spp_agegroup %in% c("all_forage", "clupeid", "spiny_ray", "soft_ray")) %>%
   group_by(spp_agegroup) %>%
-  summarize(ten_year_mean = mean(abundance_per_ha[which(year %in% seq(this_year-11,this_year-1))]),
-            this_year_abundance = abundance_per_ha[which(year == this_year)],
-            last_year_abundance = abundance_per_ha[which(year == this_year-1)],
-            percent_diff_10_yr = (((this_year_abundance+.0000001)-ten_year_mean)/ten_year_mean)*100,
-            percent_diff_last_year = (((this_year_abundance+.0000001)-last_year_abundance)/last_year_abundance)*100) %>% #percentage change from 10 yr mean
+  summarize(ten_year_mean = round(mean(abundance_per_ha[which(year %in% seq(this_year-11,this_year-1))]), 1),
+            this_year_abundance = round(abundance_per_ha[which(year == this_year)], 1),
+            last_year_abundance = round(abundance_per_ha[which(year == this_year-1)], 1),
+            percent_diff_10_yr = round((((this_year_abundance+.0000001)-ten_year_mean)/ten_year_mean*100), 1),
+            percent_diff_last_year = round((((this_year_abundance+.0000001)-last_year_abundance)/last_year_abundance)*100, 1)) %>% #percentage change from 10 yr mean
   ungroup()
+
+percent_diff_groups
 
 # same but for biomass
 biomass_summary_groups %>%
   group_by(group) %>%
-  summarize(ten_year_mean = mean(total_biomass_mt[which(year %in% seq(this_year-11,this_year-1))]),
-            this_year_biomass = total_biomass_mt[which(year == this_year)],
-            last_year_biomass = total_biomass_mt[which(year == this_year-1)],
+  summarize(ten_year_mean = mean(total_biomass_kg_ha[which(year %in% seq(this_year-11,this_year-1))]),
+            this_year_biomass = total_biomass_kg_ha[which(year == this_year)],
+            last_year_biomass = total_biomass_kg_ha[which(year == this_year-1)],
             percent_diff_10_yr = (((this_year_biomass+.0000001)-ten_year_mean)/ten_year_mean)*100,
             percent_diff_last_year = (((this_year_biomass+.0000001)-last_year_biomass)/last_year_biomass)*100) %>% #percentage change from 10 yr mean
   ungroup()
 
- 
+biomass_summary_all_spp %>%
+  group_by(species, agecode) %>%
+  summarize(ten_year_mean = mean(total_biomass_kg_ha[which(year %in% seq(this_year-11,this_year-1))]),
+            this_year_biomass = total_biomass_kg_ha[which(year == this_year)],
+            last_year_biomass = total_biomass_kg_ha[which(year == this_year-1)],
+            percent_diff_10_yr = (((this_year_biomass+.0000001)-ten_year_mean)/ten_year_mean)*100,
+            percent_diff_last_year = (((this_year_biomass+.0000001)-last_year_biomass)/last_year_biomass)*100) %>% #percentage change from 10 yr mean
+  ungroup() %>%
+  filter(agecode == 1, species %in% c(63, 301, 331))
 
 
 ### percentage of makeup  ############
@@ -81,14 +91,23 @@ yearly_abundance_tall %>%
 
 ### individual spp summaries    ##############
 abund_percent_diff %>%
-  #filter(spp_agegroup %in% c("334_1", "331_1"))            # turn these on/off for diff spp
+#  filter(spp_agegroup %in% c("334_1", "331_1"))            # turn these on/off for diff spp
   #filter(spp_agegroup %in% c("301_1", "302_1", "63_1"))      # or just use the output file, really
+  #filter(spp_agegroup %in% c("121_1", "121_3"))
   #filter(spp_agegroup %in% c("196_1", "196_3"))
   filter(spp_agegroup %in% c("366_5", "206_1", "291_1", "291_3")) 
 
+abund_percent_diff %>% 
+  arrange(-percent_diff_10_yr)
 
-### Mess-around space   ######################
-all_catch %>%
-  filter(year == 2022, species == 301) %>%
-  ggplot(aes(x = catch))+
-    geom_density()
+### Output Tables     ##################
+percent_diff_groups %>%
+  select(spp_agegroup, ten_year_mean, this_year_abundance, percent_diff_10_yr) %>%
+  mutate(percent_diff_10_yr = round(percent_diff_10_yr, 1)) %>%
+  write_csv("data derived/Table 2_1_3_1 groups.csv")
+
+abund_percent_diff %>%
+  filter(spp_agegroup %in% c("196_1", "196_3", "371_1", "63_1", "121_1", "121_3", "366_5", "334_1", "302_1", "301_1", "331_1")) %>%
+  select(common_name, agecode, ten_year_mean, this_year_abundance, percent_diff_10_yr) %>%
+  arrange(common_name, agecode) %>%
+  write_csv("data derived/Table 2_1_3_2 species.csv")

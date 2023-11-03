@@ -3,7 +3,7 @@ source("2_abundance summary.R")
 
 # Figures for FTG report and meeting presentation
 
-#### Fig 2.4.2 Graph - mean abundance by fish group, 1988 - present   ##########################
+#### Fig 2_1_3_2 Graph - mean abundance by fish group, 1988 - present   ##########################
 cols = c("clupeid" = "red", "spiny_ray" = "yellow", "soft_ray" = "deepskyblue")
 
 density_by_group <- yearly_abundance_tall %>%
@@ -12,21 +12,26 @@ density_by_group <- yearly_abundance_tall %>%
     geom_area(position = "stack", color = "black")+
     theme(axis.title = element_text(size=14, face = "bold"), 
           axis.text.y=element_text(size=14, color = "black"), 
-          axis.text.x=element_text(size=14, vjust=.5, color = "black"), axis.line = element_line(color = "black"), 
-          panel.background = element_blank(), text = element_text(family = "Times"), legend.position = "top",
+          axis.text.x=element_text(size=14, vjust=-1, color = "black"), axis.line = element_line(color = "black"), 
+          panel.background = element_blank(), 
+          text = element_text(family = "Times"), 
+          legend.position = c(.5, .9), legend.direction = "horizontal",
           legend.text = element_text(size = 12)) +
     scale_x_continuous(expand = c(0,0), breaks = seq(1988,this_year,by=5))+
     scale_y_continuous(expand = c(0,0))+
     labs(x="", y="Fish/ha")+
-    scale_fill_manual(name = "", values = cols, labels = c("Clupeid", "Spiny-rayed", "Soft-rayed"))
+    scale_fill_manual(name = "", values = cols, 
+                      breaks = c("clupeid", "spiny_ray", "soft_ray"),
+                      labels = c("Clupeid", "Spiny-rayed", "Soft-rayed"))
 
 density_by_group
 
-ggsave(plot = density_by_group, "figures/fig 2_4_2 West Basin Density by group.png", 
-       width = 7, height = 4, units = "in",dpi = 600)
+ggsave(plot = density_by_group, "figures/ftg report/fig 2_1_3_2 West Basin Density by group.png", 
+       width = 7, height = 4, units = "in", dpi = 600)
 
+# Fig 2_1_3_3 is in biomass graphs 
 
-### Fig 2.4.4 Graph - WAE and YP densities   ##################################
+### Fig 2_1_3_4 Graph - WAE and YP densities   ##################################
 labs = c("334_1" = "Age-0 Walleye", "331_1" = "Age-0 Yellow Perch")
 
 yearly_abundance_tall %>%
@@ -34,19 +39,21 @@ yearly_abundance_tall %>%
   ggplot(aes(x = year, y = abundance_per_ha))+
     geom_area(position = "stack", color = "black")+
     facet_grid(spp_agegroup ~ ., scales = "free", labeller = labeller(spp_agegroup = labs))+
-    theme(axis.title = element_text(size=14, face = "bold"), axis.text.y=element_text(size=14, color = "black"), 
-          axis.text.x=element_text(size=14, vjust=1, color = "black"), axis.line = element_line(color = "black"), 
+    theme(axis.title = element_text(size=14, face = "bold"), 
+          axis.text.y=element_text(size=14, color = "black"), 
+          axis.text.x=element_text(size=14, vjust=-1, color = "black"), 
+          axis.line = element_line(color = "black"), 
           panel.background = element_blank(), text = element_text(family = "Times"), legend.position = "top",
           strip.background = element_rect(fill = "white", color = "black"), strip.text = element_text(face = "bold", size = 12)) +
     scale_x_continuous(expand = c(0,.5), breaks = seq(1988,this_year,by=5))+
     scale_y_continuous(expand = c(0,0))+
     labs(x="", y="Fish/ha")
 
-ggsave("figures/fig 2_4_4 rel abundance perch and walleye.png", 
+ggsave("figures/ftg report/fig 2_1_3_4 rel abundance perch and walleye.png", 
        width = 7, height = 4, units = "in",dpi = 600)
 
 
-### Fig 2.4.5 Graph - Gizzard Shad and White Perch densities   ##################################
+### Fig 2_1_3_5 Graph - Gizzard Shad and White Perch densities   ##################################
 # removed alewife since they haven't been relevant for 20 years
 labs = c("63_1" = "Age-0 Gizzard Shad", "301_1" = "Age-0 White Perch")
 
@@ -55,18 +62,20 @@ yearly_abundance_tall %>%
   ggplot(aes(x = year, y = abundance_per_ha))+
   geom_area(position = "stack", color = "black")+
   facet_grid(spp_agegroup ~ ., scales = "free", labeller = labeller(spp_agegroup = labs))+
-  theme(axis.title = element_text(size=14, face = "bold"), axis.text.y=element_text(size=14, color = "black"), 
-        axis.text.x=element_text(size=14, vjust=1, color = "black"), axis.line = element_line(color = "black"), 
+  theme(axis.title = element_text(size=14, face = "bold"), 
+        axis.text.y=element_text(size=14, color = "black"), 
+        axis.text.x=element_text(size=14, color = "black", vjust=-1), 
+        axis.line = element_line(color = "black"), 
         panel.background = element_blank(), text = element_text(family = "Times"), legend.position = "top",
         strip.background = element_rect(fill = "white", color = "black"), strip.text = element_text(face = "bold", size = 12)) +
   scale_x_continuous(expand = c(0,.5), breaks = seq(1988,this_year,by=5))+
   scale_y_continuous(expand = c(0,0))+
   labs(x="", y="Fish/ha")
 
-ggsave("figures/fig 2_4_5 rel abundance white perch and shad.png", 
+ggsave("figures/ftg report/fig 2_1_3_5 rel abundance white perch and shad.png", 
        width = 7, height = 4, units = "in",dpi = 600)
 
-### Fig 2.4.6 Graph - All ages of Emerald Shiner densities   ##################################
+### Fig 2_1_3_6 Graph - All ages of Emerald Shiner densities   ##################################
 labs = c("196_3" = "Adult Emerald Shiner", "196_1" = "Age-0 Emerald Shiner")
 
 yearly_abundance_tall %>%
@@ -74,10 +83,14 @@ yearly_abundance_tall %>%
   ggplot(aes(x = year, y = abundance_per_ha, group = spp_agegroup, fill = spp_agegroup))+
   geom_area(position = "stack", alpha = .7, color = "grey60")+
   #facet_grid(spp_agegroup ~ ., scales = "free", labeller = labeller(spp_agegroup = labs))+
-  theme(axis.title = element_text(size=14, face = "bold"), axis.text.y=element_text(size=14, color = "black"), 
-        axis.text.x=element_text(size=14, vjust=1, color = "black"), axis.line = element_line(color = "black"), 
-        panel.background = element_blank(), text = element_text(family = "Times"), legend.position = "top",
-        strip.background = element_rect(fill = "white", color = "black"), strip.text = element_text(face = "bold", size = 12),
+  theme(axis.title = element_text(size=14, face = "bold"),  
+        axis.text.y=element_text(size=14, color = "black"), 
+        axis.text.x=element_text(size=14, color = "black", vjust=-1), 
+        axis.line = element_line(color = "black"), 
+        panel.background = element_blank(), 
+        legend.position = c(.2, .9),
+        strip.background = element_rect(fill = "white", color = "black"), 
+        strip.text = element_text(face = "bold", size = 12),
         legend.text = element_text(size = 12)) +
   scale_x_continuous(expand = c(0,0), breaks = seq(1988,this_year,by=5))+
   scale_y_continuous(expand = c(0,0))+
@@ -86,7 +99,7 @@ yearly_abundance_tall %>%
                     values = c("196_3" = "#fc8d59", "196_1" = "#91bfdb"),
                     name = "")
 
-ggsave("figures/fig 2_4_6 rel abundance emerald shiner.png", 
+ggsave("figures/ftg report/fig 2_1_3_6 rel abundance emerald shiner.png", 
        width = 7, height = 4, units = "in",dpi = 600)
 
 # Graph - Goby and Troutperch
