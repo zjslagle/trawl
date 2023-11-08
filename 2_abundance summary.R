@@ -25,10 +25,10 @@ percent_perch_draft <- all_lengths %>%
   mutate(agecode = if_else(length > cutoff, 4, 2)) %>% #assign age codes
   group_by(projcode, year, agency, yrsam, crn, species, agecode) %>% 
   summarize(catch = n()) %>% # sum over agecodes
-  pivot_wider(id_cols = yrsam,
+  pivot_wider(id_cols = c(year, yrsam),
               names_from = agecode, 
               values_from = catch, names_prefix = "ac_") %>% # make wide
-  mutate(pct_ac_4 = case_when(is.na(ac_2) ~ 1, # calc % of AC4 - NA means 0 at that age
+  mutate(pct_ac_4 = case_when(is.na(ac_2) ~ 1, # calc % of AC4 - NA means 0 at that age in sample
                               is.na(ac_4) ~ 0,
                               T ~ ac_4/sum(ac_2, ac_4)))
 
@@ -52,36 +52,6 @@ catch_perch_older <- all_catch %>%
 
 all_catch <- all_catch %>% full_join(catch_perch_older)
 
-all_catch %>%
-  filter(year > 1997, species == 331, agecode != 1, agency == "ON") %>%
-  left_join(percent_perch_draft) %>%
-  arrange(yrsam, agecode) %>% filter(is.na(pct_ac_4), year != 2004) %>% view
-
-all_effort %>%
-  filter(yrsam %in% c("ON2021261", "ON2013260")) %>% view
-all_lengths_raw %>%
-  filter(yrsam %in% c("ON2021261", "ON2013260"), species == 331, agecode != 1) %>% view
-
-catch_perch_older %>% filter(yrsam %in% c("ON2021261", "ON2013260"))
-
-all_catch %>%
-  filter(year %in% c(2013, 2021), species == 331, agecode != 1, agency == "ON") %>% view
-
-# artifically make DO OK and change effstat :
-# made_up <- all_effort %>%
-#   filter(yrsam %in% c("ON2021261", "ON2013260")) %>%
-#   mutate(botoxy = 10,
-#          effstat = 1)
-# 
-# all_effort <- all_effort %>%
-#   filter(!(yrsam %in% c("ON2021261", "ON2013260"))) %>%
-#   left_join(made_up)
-
-
-
-
-
-
 ### Create Catch Summary   ############################################################################
 # sum over CRN (only summarizes ~10 rows), join effort, filter out bad trawls
 draft_catch_summary <- all_catch %>%
@@ -90,8 +60,7 @@ draft_catch_summary <- all_catch %>%
   ungroup() %>% 
   left_join(all_effort %>% 
               select(projcode, year, agency, yrsam, crn, depth, effdur, effdist, effstat, totdist, longitude, latitude)) %>%
-  arrange(year, crn, projcode) %>% 
-  filter(effstat == 1, year != 1987, !is.na(effdist)) #last part filters out one site in '93
+  arrange(year, yrsam)
 
 #filter only spp-age groups that we care about, sum, then add explicit zero catches
 catch_summary <- draft_catch_summary %>%
@@ -161,8 +130,8 @@ catch_per_area <- catch_summary %>%
 #       North Am. J. Fish. Manag. 26, 559–570. https://doi.org/10.1577/m05-027.1
 
 cpha_by_site <- catch_per_area %>%
-  group_by(year, yrsam, crn, state, depth_strata, spp_agegroup, species, agecode) %>%
-  summarize(cpha = round(fish_per_area*10000, 2)) %>% #convert meters^2 to hectares
+  group_by(year, yrsam, crn, state, depth_strata, spp_agegroup, species, agecode, sum_catch) %>%
+  summarize(cpha = round(fish_per_area*10000, 3)) %>% #convert meters^2 to hectares
   ungroup
 
 #doublecheck that we didn't lose a bunch of sites somehow!
@@ -171,7 +140,13 @@ cpha_by_site %>%
   xtabs(~year+state, data = .)
 
 #write to CSV
-#cpha_by_site %>% write_csv("data derived/Interagency CPHA by site.csv")
+#cpha_by_site %>% 
+#filter(sum_catch != 0) %>% write_csv("data derived/Interagency CPHA by site.csv")
+
+# cpha_by_site %>% 
+#   filter(spp_agegroup %in% c("331_2", "331_4"), year == 2021) %>%
+#   arrange(spp_agegroup, yrsam) %>%
+#   write_csv("data derived/Interagency CPHA by site - PERCH.csv")
 
 # quick Age-0 walleye (or whatever) graph
 # cpha_by_site %>%
@@ -219,7 +194,7 @@ yearly_abundance_by_agency <- mean_cpha_by_strata %>%
                                                                 depth_strata == "deep" ~ mean_fish * 1.244E+9),
                                      state == "US" ~ case_when(depth_strata == "shallow" ~ mean_fish * 9.281E+8,
                                                                 depth_strata == "deep" ~ mean_fish * 1.413E+9)),
-         abundance_per_ha = round(total_abundance/375320,2)) # number per hectare
+         abundance_per_ha = round(total_abundance/375320,3)) # number per hectare
 
 
 
@@ -229,7 +204,7 @@ yearly_abundance_by_agency <- mean_cpha_by_strata %>%
 yearly_abundance_tall <- yearly_abundance_by_agency %>%
   group_by(year, spp_agegroup, species, agecode) %>%
   summarize(total_abundance = sum(total_abundance),
-            abundance_per_ha = round(total_abundance/375320,2)) %>%
+            abundance_per_ha = round(total_abundance/375320,3)) %>%
   ungroup %>% 
   left_join(spp_codes %>% select(-latin_name)) %>%
   filter(spp_agegroup %in% c("61_1", "61_3", "63_1", "196_1", "196_3", "201_1", # filter "forage fish" only

@@ -40,16 +40,16 @@ agecodes = tibble(agecode = 1:5,
 # parses/allocates these fish afterwards into agecode 1 or 3 based on... length I guess? Need to ask Andy Cook.  
 #trawl_database <- odbcConnectAccess2007("data sources/ON21parse_OH21_ERIEWEST_TRAWL_IN_OH_FMT_Nov23.accdb")
 trawl_database <- odbcConnectAccess2007("data sources/ON23parse_OH23_ERIEWEST_TRAWL_IN_OH_FMT_Oct30_23.accdb")
-# 
-# #list tables in trawl database
-# sqlTables(trawl_database)
-# 
-# #read in required data from trawl - note that if you don't use as_tibble, sqlFetch() returns an odd
-# #     tbl with sqlFetch(trawl_database, "OH Lengths") as the one obs
-all_effort_raw <- as_tibble(sqlFetch(trawl_database, "EFFORT"))
-all_catch_raw <- as_tibble(sqlFetch(trawl_database, "CATCH"))
-all_lengths_raw <- as_tibble(sqlFetch(trawl_database, "LENGTH"))
-# 
+
+#list tables in trawl database
+#sqlTables(trawl_database)
+
+# read in required data from trawl - note that if you don't use as_tibble, sqlFetch() returns an odd
+#      tbl with sqlFetch(trawl_database, "OH Lengths") as the one obs
+  all_effort_raw <- as_tibble(sqlFetch(trawl_database, "EFFORT"))
+  all_catch_raw <- as_tibble(sqlFetch(trawl_database, "CATCH"))
+  all_lengths_raw <- as_tibble(sqlFetch(trawl_database, "LENGTH"))
+
 # #close connection to DB
 odbcCloseAll()
 
@@ -111,8 +111,8 @@ all_lengths %>%
 
 ### Fix errors and make joins in each dataset ###########################
 #
-# MAJOR NOTE - ON data does NOT contain uniques CRN's in their crn column. Rather, their "yrsam" appear to be unique crns similar to ours
-#                (i.e., YEAR + CRN). Here I merge their yrsam with our crn column, so we have a column of unique IDs by catch record
+# MAJOR NOTE - ON data does NOT contain uniques CRN's in their CRN column. Rather,"yrsam" combines 
+#              year/agency/CRN and should be used as the key between tables.
 #
 # ALSO NOTE - effstat is trawl status. Status = 1 means the trawl was normal, status != 1 means something got
 #             messed up (hung, torn, etc.), so it needs to be excluded. BUT, first we merge effort with
@@ -123,32 +123,31 @@ all_lengths %>%
 all_effort <- all_effort %>% 
   mutate(projcode = case_when(projcode %in% c("LEA-IF00_001","LEA_IF00-001") ~ "LEA_IF00_001",
                               T ~ projcode),#fix mismatch between underscores and dashes)
-         effdist = if_else(is.na(effdist), speed*(effdur/60), effdist)) 
+         effdist = if_else(is.na(effdist), speed*(effdur/60), effdist),
+         effstat = case_when(botoxy <= 2 & year %in% c(2009:2012) ~ 0, #This codes matches ON/Andy's summary no explanation as for why.
+                             botoxy <= 2 & !is.na(botoxy) & year %in% c(2016:this_year) ~ 0, 
+                             T ~ effstat))  #SAS note: TEMPORARY MEASURE TO HANDLE LOW DO 2009-2011 # LOL @ "temporary") 
+
 
 # fix errors in catch
 all_catch <- all_catch %>%
   mutate(projcode = case_when(projcode %in% c("LEA-IF00_001","LEA_IF00-001") ~ "LEA_IF00_001",
                               T ~ projcode)) %>% #fix mismatch between underscores and dashes
-  left_join(all_effort %>% 
-              select(yrsam, crn, effdist, effstat, botoxy) %>% 
-              unique) %>%                                              #THESE MUST BE UNIQUE VALUES
-  mutate(effstat = case_when(botoxy < 2 & year %in% c(2009:2012, 2016:this_year) ~ 0,
-                             is.na(botoxy) & year %in% c(2009:2012, 2016:this_year) ~ 1, #This matches ON/Andy's summary - I believe he still uses NA botoxy
-                              T ~ effstat)) %>%  #SAS note: TEMPORARY MEASURE TO HANDLE LOW DO 2009-2011 # LOL @ "temporary"
-  filter(year != 1987, effstat == 1, !is.na(effdist)) %>%
+  left_join(all_effort %>% select(yrsam, crn, effstat)) %>%   # used to be a unique() here                                           #THESE MUST BE UNIQUE VALUES
+  filter(year != 1987, effstat == 1) %>%
   mutate(agecode = case_when(species == 366 ~ 5, #manually fix mismatches b/t OH and ON agecodes
                              species == 342 ~ 5,
+                             species == 331 & agency == "OH" & agecode == 3 ~ 4, #recode OH AC3 to adult
                              T ~ agecode)) 
   
 
 #fix bad projcodes and remove bad trawls (1987, effstat/effdist)
 all_lengths <- all_lengths %>% mutate(projcode = case_when(projcode %in% c("LEA-IF00_001","LEA_IF00-001") ~ "LEA_IF00_001",
                                              T ~ projcode)) %>%
-  left_join(all_effort %>% select(projcode,  yrsam, crn, year, effdist, effstat, botoxy) %>% unique) %>% #THIS MUST BE UNIQUE VALUES
-  mutate(effstat = if_else(botoxy < 2 & year > 2008, 0, effstat)) %>%  #SAS note: TEMPORARY MEASURE TO HANDLE LOW DO 2009-2011
-  filter(year != 1987, effstat == 1, !is.na(effdist)) %>%
-  select(-year, -effdist, -effstat) %>%
-  arrange(projcode, crn, species, agecode)%>%
+  left_join(all_effort %>% select(yrsam, crn, year, effstat) %>% unique) %>% #THIS MUST BE UNIQUE VALUES
+  filter(year != 1987, effstat == 1) %>%
+  select(-effstat) %>%
+  arrange(year, crn, species, agecode)%>%
   mutate(agecode = case_when(species == 366 ~ 5, #manually fix mismatches b/t OH and ON agecodes
                              species == 342 ~ 5,
                              T ~ agecode)) 
@@ -165,25 +164,15 @@ all_catch %>%
 # as of 2021, looks like only real difference is logperch (342) is counted as AC 5, while we split into AC 1 and 3
 # this has now been fixed (manual mismatches, above)
 
-# counts of hypoxic/good/bad trawls by year - in ALL EFFORT
-all_effort_raw %>%
-  mutate(effstat = if_else(botoxy < 2, 0, effstat)) %>%
+# counts of hypoxic/good/bad trawls by year
+all_effort %>%
   group_by(year) %>%
-  summarize(n_hypoxic = sum(botoxy < 2, na.rm = T),
+  summarize(n_hypoxic = sum(effstat == 0, na.rm = T),
             n_bad = sum(effstat != 1, na.rm = T),
             n_good = sum(effstat == 1, na.rm = T),
             n_total = n(),
-            n_na_effdist = sum(is.na(effdist) & effstat == 1))
+            n_na_effdist = sum(is.na(effdist) & effstat == 1)) # %>% view
 
-all_catch %>%
-  select(year, botoxy, effstat, effdist) %>%
-  unique() %>%
-  group_by(year) %>%
-  summarize(n_hypoxic = sum(botoxy < 2, na.rm = T),
-            n_bad = sum(effstat != 1, na.rm = T),
-            n_good = sum(effstat == 1, na.rm = T),
-            n_total = n(),
-            n_na_effdist = sum(is.na(effdist) & effstat == 1))
 
 # theme with dark background and light colors for best PPT presentations
 inverse_theme <- function(){theme_transparent()+
