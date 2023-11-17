@@ -134,10 +134,6 @@ cpha_by_site <- catch_per_area %>%
   summarize(cpha = round(fish_per_area*10000, 3)) %>% #convert meters^2 to hectares
   ungroup
 
-#doublecheck that we didn't lose a bunch of sites somehow!
-cpha_by_site %>% 
-  select(year, state, yrsam) %>% unique %>% 
-  xtabs(~year+state, data = .)
 
 #write to CSV
 #cpha_by_site %>% 

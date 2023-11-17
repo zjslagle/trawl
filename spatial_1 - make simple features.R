@@ -1,11 +1,36 @@
 
+
 # mapping libraries
+library(magrittr)
 library(sf)
 library(tmap)
 library(mapview)
+require(RODBC)
 library(stringr)
+library(tidyverse)
+this_year = year(now())#-1 #get this year
 
-source("1_read data - 2020 format.R")
+### Get effort data  (duplicates 1_read data)  #############################################################
+trawl_database <- odbcConnectAccess2007("data sources/ON23parse_OH23_ERIEWEST_TRAWL_IN_OH_FMT_Oct30_23.accdb")
+all_effort_raw <- as_tibble(sqlFetch(trawl_database, "EFFORT"))
+odbcCloseAll()
+
+names(all_effort_raw) %<>% tolower
+
+all_effort <- all_effort_raw %>%
+  mutate(crn = as.character(crn),
+         projcode = as.character(projcode))
+
+all_effort <- all_effort %>% 
+  mutate(projcode = case_when(projcode %in% c("LEA-IF00_001","LEA_IF00-001") ~ "LEA_IF00_001",
+                              T ~ projcode),#fix mismatch between underscores and dashes)
+         effdist = if_else(is.na(effdist), speed*(effdur/60), effdist),
+         effstat = case_when(botoxy <= 2 & year %in% c(2009:2012) ~ 0, #This codes matches ON/Andy's summary no explanation as for why.
+                             botoxy <= 2 & !is.na(botoxy) & year %in% c(2016:this_year) ~ 0, 
+                             T ~ effstat))  #SAS note: TEMPORARY MEASURE TO HANDLE LOW DO 2009-2011 # LOL @ "temporary") 
+
+
+#source("1_read data - 2020 format.R") # <- may need this
 
 map_folder = "C:/Users/10173930/Documents/maps/shapefiles/"
 
@@ -39,5 +64,3 @@ effort_points <- all_effort %>%
   filter(!is.na(longitude), !is.na(latitude)) %>%
   st_as_sf(coords = c("longitude", "latitude"), crs = 4326)
 
-temp <- effort_points %>% filter(year == 2021)
-mapview(temp ) 
