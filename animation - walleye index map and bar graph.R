@@ -11,10 +11,11 @@ require(beepr)
 #read in data
 wae_site_data <- read_csv("data derived/Interagency CPHA by site.csv") %>%
   filter(year > 1987, agecode == 1, species == 334) %>%
-  left_join(all_effort %>% select(yrsam, latitude, longitude))
+  left_join(all_effort %>% select(yrsam, latitude, longitude)) %>%
+  mutate(year_dummy = year)
 
 # Static Map Setup 
-wae_map <- ggplot(data = wae_site_data)+          # CHANGED THIS
+wae_map <- ggplot(data = wae_site_data)+
   scale_x_continuous(limits = c(wb_bounds["xmin"], wb_bounds["xmax"]))+
   scale_y_continuous(limits = c(wb_bounds["ymin"], wb_bounds["ymax"]))+
   geom_sf(data = us_and_can, fill = "lightyellow2")+
@@ -23,7 +24,8 @@ wae_map <- ggplot(data = wae_site_data)+          # CHANGED THIS
                  size = cpha, fill = cpha, group = year), 
              color = "black", shape = 21)+
   geom_sf(data = state_border, lty = 3)+
-  geom_label(aes(x = -83.4, y = 42.12), label = "{closest_state}",
+  geom_label(x = -83.4, y = 42.12, 
+             aes(label = paste(round(year_dummy))),
              size = 7, fontface = "bold")+
   scale_size(name = "Fish per\nhectare",
              range = c(.3, 10))+
@@ -103,16 +105,14 @@ wae_bar <- wae_index %>%
   geom_col(color = "black", fill = "orangered")+
   scale_x_continuous(expand = c(0,.5), breaks = seq(1988, this_year, by=5))+
   scale_y_continuous(expand = c(0,0))+
-  labs(x="", y="Fish/ha",
-       caption = paste0("Data from OMNRF and ODNR-DOW August trawl surveys, 1988–", this_year, "."))+
+  labs(x="Year", y="Fish/hectare")+
   theme_minimal()+
   theme(plot.background = element_rect(fill = "white", color = NA),
-        axis.title = element_text(size=16, face = "bold"), 
-        axis.text.y=element_text(size=16, color = "black", face = "bold"), 
-        axis.text.x=element_text(size=16, vjust=-1, color = "black", face = "bold"), 
-        axis.line = element_line(color = "black"),
-        plot.caption = element_text(size = 14, hjust = -.05),
-        plot.caption.position = "plot")
+        axis.title = element_text(size=14, face = "bold"),
+        axis.title.y = element_text(vjust = 1),
+        axis.text.y=element_text(size=14, color = "black", face = "bold"), 
+        axis.text.x=element_text(size=14, vjust=0, color = "black", face = "bold"), 
+        axis.line = element_line(color = "black"))
   
 ggsave(wae_bar,
        filename = "figures/animations/test age-0 Walleye bargraph.png",
@@ -156,4 +156,4 @@ for(i in 2:length(wae_map_gif)){
   new_gif <- c(new_gif, combined)
 }
 
-image_write(new_gif, path = "figures/animations/combined GIF.gif", format = "gif"); beep(2)
+image_write(new_gif, path = "figures/animations/combined GIF.gif", format = "gif"); beep(5)
