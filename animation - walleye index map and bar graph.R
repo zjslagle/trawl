@@ -29,9 +29,12 @@ wae_map <- ggplot(data = wae_site_data)+
              size = 7, fontface = "bold")+
   scale_size(name = "Fish per\nhectare",
              range = c(.3, 10))+
-  scale_fill_gradientn(name = "Fish per\nhectare",
-                       colours = c('white', "#ffc500", "orangered"),
-                       values = c(0, .2, 1))+
+  # scale_fill_gradientn(name = "Fish per\nhectare",
+  #                      colors = c('white', "#ffc500", "orangered"),
+  #                      values = c(0, .2, 1))+
+  scale_fill_viridis_c(name = "Fish per\nhectare",
+                       values = c(0, .05, 1),
+                       option = "plasma")+
   guides(fill = guide_legend(), size = guide_legend())+ #combines legends
   ggsn::scalebar(dist = 15, model = "WGS84",location = "topright", dist_unit = "km", 
                  x.min = wb_bounds["xmin"], y.min = wb_bounds["ymin"], 
@@ -56,7 +59,9 @@ wae_map <- ggplot(data = wae_site_data)+
 # save static map - use this to fine tune edits for map appearance
 ggsave(wae_map,
        filename = "figures/animations/test - age-0 Walleye map.png",
-       width=7, height=5, units="in", dpi=400, pointsize=12)
+       width = 1080, height = 965, units = "px",
+       #width=7, height=5, units="in", 
+       dpi=400, pointsize=12)
 
 ### Animated map   #####################################################
 # set up animation variables - used across multiple graphs
@@ -157,3 +162,4 @@ for(i in 2:length(wae_map_gif)){
 }
 
 image_write(new_gif, path = "figures/animations/combined GIF.gif", format = "gif"); beep(5)
+
