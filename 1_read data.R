@@ -26,7 +26,7 @@ library(tidyverse)
 options(warn = 0) #warnings back on
 
 
-this_year = year(now())#-1 #get this year
+this_year = year(now()) #get this year
 windowsFonts(Times=windowsFont("Times New Roman"))
 
 #read in species codes/common names and grouping (diff files b/c need to split some age-0 fish into forage groups)
@@ -39,7 +39,7 @@ agecodes = tibble(agecode = 1:5,
 # Need to use the "parsed" database - OMNRF initially classifies many of their intermediate-sized fish as agecode 5, then
 # parses/allocates these fish afterwards into agecode 1 or 3 based on... length I guess? Need to ask Andy Cook.  
 #trawl_database <- odbcConnectAccess2007("data sources/ON21parse_OH21_ERIEWEST_TRAWL_IN_OH_FMT_Nov23.accdb")
-trawl_database <- odbcConnectAccess2007("data sources/ON23parse_OH23_ERIEWEST_TRAWL_IN_OH_FMT_Oct30_23.accdb")
+trawl_database <- odbcConnectAccess2007("data sources/ON24parse_OH24_ERIEWEST_TRAWL_IN_OH_FMT_Sept18_24.accdb")
 
 #list tables in trawl database
 #sqlTables(trawl_database)
@@ -96,7 +96,7 @@ all_catch %>%
   anti_join(all_effort) %>% 
   select(yrsam) %>% unique
 
-#vice versa
+#vice versa - in effort but not catch (zero catches?)
 all_effort %>% 
   filter(effstat == 1) %>% # there are many zero catches for effstat != 1
   select(year, crn, projcode, agency, yrsam) %>% 
@@ -178,9 +178,9 @@ all_effort %>%
 inverse_theme <- function(){theme_transparent()+
     theme(legend.position = "top",
           rect = element_rect(fill = NA),
-          axis.title = element_text(size=18, color = "white"), 
-          axis.text.y=element_text(size=18), 
-          axis.text.x=element_text(size=18, vjust=.1), 
+          axis.title = element_text(size=24, color = "white", face = "bold"), 
+          axis.text.y=element_text(size=22, face = "bold"), 
+          axis.text.x=element_text(size=22, vjust=.1, face = "bold"), 
           axis.line = element_line(color = "white"),
           axis.ticks = element_line(color = "white"),
           panel.background = element_blank(),

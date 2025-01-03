@@ -33,13 +33,14 @@ mean_lengths %>%
           panel.background = element_blank(), 
           text = element_text(family = "Times"), 
           legend.position = "top",
-          legend.key = element_blank()) 
+          legend.key = element_blank(),
+          plot.margin = unit(c(.5,1,.5,.5), "cm")) 
 
 ggsave("figures/ftg report/Fig 2_3_3_1 mean lengths.png", width = 6, height = 3.5, units = "in",dpi = 600)
 
 # text summary:
-mean_lengths %>%
-  filter(species %in% c(334, 331, 302, 301), agecode == 1, year == this_year)
+mean_lengths %>% filter(species %in% c(334, 331, 302, 301), agecode == 1, year == this_year-1)
+mean_lengths %>% filter(species %in% c(334, 331, 302, 301), agecode == 1, year == this_year)
 
 #### Fig - mean lengths for sportfish species MINUS WAE
 mean_lengths %>%

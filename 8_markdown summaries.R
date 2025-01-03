@@ -16,14 +16,14 @@ effort_summary <- all_effort %>%
 ### INDICES    ###############################################
 # Index values and comparison to 10-yr mean
 abund <- yearly_abundance_tall %>%
-  group_by(spp_agegroup, common_name, agecode) %>%
+  group_by(spp_agegroup, common_name) %>%
   #filter(spp_agegroup %in% c("334_1", "334_2", "331_1", "331_2")) %>%
   summarize(ten_year_mean = round(mean(abundance_per_ha[which(year %in% seq(this_year-11,this_year-1))])+.001, 1),
             abundance = round(abundance_per_ha[which(year == this_year)]+.001, 1),
             percent_diff_10_yr = sprintf("%0.1f%%", 100*round(((abundance+.0000001)-ten_year_mean+.0000001)/ten_year_mean, 3)), #percentage change from 10 yr mean
             ) %>% 
   ungroup() %>%
-  arrange(common_name, agecode)
+  arrange(spp_agegroup)
 
 # ranks in time series
 ranks <- yearly_abundance_tall %>%

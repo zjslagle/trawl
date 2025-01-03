@@ -4,17 +4,7 @@
 # WB/Interagency, CB Ohio, EB NY, EB ON (Long Point Bay)
 # Zak Slagle Mar 2020
 
-library(magrittr)
-library(forcats)
-require(lubridate)
-require(stringr)
-require(readxl)
-require(ggpubr)
-library(tidyverse)
-
-
-this_year = year(now())-1 #get this year
-windowsFonts(Times=windowsFont("Times New Roman"))
+source("graph - abundance.R")
 
 # read data
 forage <- read_excel("data sources/Forage Fish Trends_All Agencies.xlsx", sheet = "trawl_tall")
@@ -55,12 +45,15 @@ forage %>%
 forage <- forage %>% filter(year > 1999, agency != "MI")
 
 ### PreLEC/LEC - West Basin Abundance by forage group  #####################
-source("graph - abundance.R")
+
 
 density_by_group+
   inverse_theme()+
   geom_area(position = "stack", color = "white")+
-  theme(plot.background = element_rect(fill = "#003D73"))
+  theme(plot.background = element_rect(fill = "#003D73"),
+        plot.margin = unit(c(.5,1,.5,.5), "cm"),
+        axis.title = element_text(size=18, face = "bold"), 
+        axis.text = element_text(size=16))
 
 ggsave("figures/whole lake/abundance - WESTERN BASIN-IA by group.png", 
        width = 13.5, height = 6.5, units = "in",dpi = 600)
@@ -73,8 +66,8 @@ test_colors <- c("#51C1AB", "#FFD56B", "#6371C9", "#FFA56B")
 new_colors <- c("#68affc", "#ff864a", "#fffa66", "white")
 colors <- new_colors
 line_types = c(1, 2, 1, 95) #line types across all line graphs
-width_print = 13.3 #fucking LEC making us put video in the bottom right corner where the trends are
-height_print = 5.1
+width_print = 13.3333 #fucking LEC making us put video in the bottom right corner where the trends are
+height_print = 6.5 #5.1
 
 scales::show_col(new_colors)
 
@@ -204,7 +197,7 @@ smelt_yoy_percent <- forage_ranked %>%
   geom_col(position = "dodge")+
   geom_hline(aes(yintercept = 0), 
              col = "white",
-             size = 1)+
+             linewidth = 1)+
   facet_grid(basin ~ .)+
   scale_x_continuous(expand = c(0,0), 
                      breaks = seq(1988,this_year,by=3), limits = c(1999, this_year+1))+
@@ -227,7 +220,7 @@ smelt_adult_percent <- forage_ranked %>%
   geom_col(position = "dodge")+
   geom_hline(aes(yintercept = 0), 
              col = "white",
-             size = 1)+
+             linewidth = 1)+
   facet_grid(basin ~ .)+
   scale_x_continuous(expand = c(0,0), breaks = seq(1988,this_year,by=3), limits = c(1999, this_year+1))+
   scale_y_continuous(expand = c(0,0),
@@ -247,7 +240,7 @@ shiner_percent <- forage_ranked %>%
   geom_col(position = "dodge")+
   geom_hline(aes(yintercept = 0), 
              col = "white",
-             size = 1)+
+             linewidth = 1)+
   facet_grid(basin ~ .)+
   scale_x_continuous(expand = c(0,0), breaks = seq(1988,this_year,by=3), limits = c(1999, this_year+1))+
   scale_y_continuous(expand = c(0,0),
@@ -268,7 +261,7 @@ shad_yoy_percent <- forage_ranked %>%
   geom_col(position = "dodge")+
   geom_hline(aes(yintercept = 0), 
              col = "white",
-             size = 1)+
+             linewidth = 1)+
   facet_grid(basin ~ .)+
   scale_x_continuous(expand = c(0,0), breaks = seq(1988,this_year,by=3), limits = c(1999, this_year+1))+
   scale_y_continuous(expand = c(0,0),
@@ -288,7 +281,7 @@ goby_percent <- forage_ranked %>%
   geom_col(position = "dodge")+
   geom_hline(aes(yintercept = 0), 
              col = "white",
-             size = 1)+
+             linewidth = 1)+
   facet_grid(basin ~ .)+
   scale_x_continuous(expand = c(0,0), breaks = seq(1988,this_year,by=3), limits = c(1999, this_year+1))+
   scale_y_continuous(expand = c(0,0),
@@ -323,7 +316,7 @@ total_forage_all_basins <- total_forage %>%
   geom_hline(data = mean_forage,
              aes(yintercept = mean_forage),
              color = "grey70",
-             size = 3,
+             linewidth = 3,
              lty = 3)+
   geom_line(lwd = 2)+
   geom_text(data = mean_forage,

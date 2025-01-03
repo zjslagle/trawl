@@ -1,13 +1,9 @@
-
+source("1_read data.R")
 
 # mapping libraries
-library(magrittr)
 library(sf)
 library(tmap)
 library(mapview)
-require(RODBC)
-library(stringr)
-library(tidyverse)
 this_year = year(now())#-1 #get this year
 
 ### Get effort data  (duplicates 1_read data)  #############################################################
@@ -16,7 +12,7 @@ all_effort <- read_csv("data derived/all effort.csv")
 #source("1_read data - 2020 format.R") # <- may need this
 
 map_folder = "C:/Users/10173930/Documents/maps/shapefiles/" #work laptop
-map_folder = "C:/Users/zakjs/Documents/Ohio DoW/Maps/" #personal laptop
+#map_folder = "C:/Users/zakjs/Documents/Ohio DoW/Maps/" #personal laptop
 #units are annoying
 clean_units <- function(x){
   attr(x,"units") <- NULL

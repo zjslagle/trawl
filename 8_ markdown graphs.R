@@ -45,7 +45,10 @@ density_by_group <- yearly_abundance_tall %>%
   scale_x_continuous(expand = c(0,0), breaks = seq(1988,this_year,by=5))+
   scale_y_continuous(expand = c(0,0))+
   labs(x="", y="Fish/ha")+
-  scale_fill_manual(name = "", values = cols, labels = c("Clupeid", "Spiny-rayed", "Soft-rayed"))
+  scale_fill_manual(name = "", 
+                    values = cols, 
+                    breaks = c("clupeid", "spiny_ray", "soft_ray"),
+                    labels = c("Clupeid", "Spiny-rayed", "Soft-rayed"))
 
 density_by_group
 

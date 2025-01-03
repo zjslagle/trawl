@@ -31,6 +31,7 @@ bad_sites <- filter(trawl_sites, status == "bad_trawl")
 low_do_sites <- filter(trawl_sites, status == "low_do")
 
 ### Static Tmap Map   #############################################
+
 sites_tmap <- tm_shape(us_and_can, bbox = wb_bounds)+tm_fill()+ #plot land
   tm_shape(urban_areas)+tm_fill(col = "wheat3")+ #plot cities
   tm_shape(lake_erie)+tm_borders()+tm_fill(col="#ADD8E6")+ #plot lake, fill with blue

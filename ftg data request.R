@@ -1,5 +1,4 @@
 
-source("2_abundance summary.R")
 source("3_biomass summary.R")
 require(xlsx)
 
@@ -75,11 +74,31 @@ yearly_abundance_tall %>%
   select(-agecode) %>%
   write_csv("data derived/data requests/22_09_29 Lake Erie Western Basin Interagency Forage abundances.csv")
 
-### Locations for FTG Report map  ####################
-all_effort %>%
-  filter(year == this_year, effstat == 1) %>%
-  mutate(survey = "interagency",
-         basin = "west",
-         agency = if_else(agency == "ON", "OMNRF", "ODNR")) %>%
-  select(survey, agency, basin, latitude, longitude) %>%
-  write_csv("data derived/ftg report points.csv")
+
+
+### WB Climate Synchrony USGS - percent catches etc. ############################
+total_catch <- catch_summary %>%
+  summarize(sum(sum_catch)) %>% as_vector()
+
+# YOY summary
+catch_summary %>%
+  filter(agecode == 1) %>%
+  group_by(species, agecode) %>%
+  summarize(catch = sum(sum_catch),
+            percent_catch = (catch/total_catch)) %>%
+  write_csv("data derived/data requests/age-0 catch percentages.csv")
+
+# all fish summary
+catch_summary %>%
+  group_by(species, agecode) %>%
+  summarize(catch = sum(sum_catch),
+            percent_catch = (catch/total_catch)) %>%
+  write_csv("data derived/data requests/all ages catch percentages.csv")
+
+# adult summary
+catch_summary %>%
+  filter(agecode %in% c(3,4,5)) %>%
+  group_by(species, agecode) %>%
+  summarize(catch = sum(sum_catch),
+            percent_catch = (catch/total_catch)) %>%
+  write_csv("data derived/data requests/adult catch percentages.csv")

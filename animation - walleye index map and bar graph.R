@@ -77,7 +77,7 @@ end_pause = 0
 
 # initialize animation
 wae_animation <- wae_map+
-  transition_states(year, 
+  transition_states(states = year, 
                     transition_length = trans_len, 
                     state_length = state_len,
                     wrap = FALSE) +
@@ -123,6 +123,7 @@ ggsave(wae_bar,
        filename = "figures/animations/test age-0 Walleye bargraph.png",
        width=7, height=2, units="in", dpi=400, pointsize=12)
 
+
 ### Animated bargraph     #############################
 
 bar_animation <- wae_bar+
@@ -163,3 +164,10 @@ for(i in 2:length(wae_map_gif)){
 
 image_write(new_gif, path = "figures/animations/combined GIF.gif", format = "gif"); beep(5)
 
+
+
+### Static map   #########################
+
+static_image <- image_append(c(wae_map_gif[250], wae_bar_gif[250]), stack = TRUE)
+
+image_write(static_image, path = "figures/animations/static 2023 index image.gif", format = "gif"); beep(5)

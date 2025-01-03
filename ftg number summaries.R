@@ -27,7 +27,7 @@ do_summary %>% tail
 # Percent low DO sites graph
 do_summary %>%
   ggplot(aes(x = year, y = percent_low_do))+
-    geom_col()+
+    geom_col(fill = "orangered", color = "black")+
     labs(x = "Year", y = "Percent of trawl sites", 
          title = "Trawl sites affected by Anoxic Conditions",
          subtitle = "Interagency trawl in the West Basin of Lake Erie, August trawls")+
@@ -38,7 +38,7 @@ ggsave("figures/low DO percentage trawls over time.png", width = 7, height = 5, 
 # Total low DO sites graph
 do_summary %>%
   ggplot(aes(x = year, y = n_hypoxic))+
-  geom_col()+
+  geom_col(fill = "orangered", color = "black")+
   labs(x = "Year", y = "Hypoxic trawls (n)", 
        title = "Trawl sites affected by Anoxic Conditions",
        subtitle = "Interagency trawl in the West Basin of Lake Erie, August trawls")+
@@ -60,6 +60,14 @@ percent_diff_groups <- yearly_abundance_tall %>%
 
 percent_diff_groups
 
+### percentage of makeup  ############
+yearly_abundance_tall %>%
+  filter(year == this_year , !(spp_agegroup %in% c("clupeid", "spiny_ray", "soft_ray"))) %>%
+  mutate(percent_makeup = round(abundance_per_ha/abundance_per_ha[which(spp_agegroup == "all_forage")] * 100, 1)) %>%
+  arrange(-percent_makeup) %>%
+  filter(spp_agegroup != "all_forage")
+
+
 # same but for biomass
 biomass_summary_groups %>%
   group_by(group) %>%
@@ -78,21 +86,16 @@ biomass_summary_all_spp %>%
             percent_diff_10_yr = (((this_year_biomass+.0000001)-ten_year_mean)/ten_year_mean)*100,
             percent_diff_last_year = (((this_year_biomass+.0000001)-last_year_biomass)/last_year_biomass)*100) %>% #percentage change from 10 yr mean
   ungroup() %>%
-  filter(agecode == 1, species %in% c(63, 301, 331))
+  filter(agecode == 1, species %in% c(63, 301, 331, 291))
 
 
-### percentage of makeup  ############
-yearly_abundance_tall %>%
-  filter(year == this_year , !(spp_agegroup %in% c("clupeid", "spiny_ray", "soft_ray"))) %>%
-  mutate(percent_makeup = round(abundance_per_ha/abundance_per_ha[which(spp_agegroup == "all_forage")] * 100, 1)) %>%
-  arrange(-percent_makeup) %>%
-  filter(spp_agegroup != "all_forage")
 
 
-### individual spp summaries    ##############
+### individual spp summaries    ############### 
+# -------- or just use the output file, really
 abund_percent_diff %>%
-#  filter(spp_agegroup %in% c("334_1", "331_1"))            # turn these on/off for diff spp
-  #filter(spp_agegroup %in% c("301_1", "302_1", "63_1"))      # or just use the output file, really
+  #filter(spp_agegroup %in% c("334_1", "331_1"))            # turn these on/off for diff spp
+  #filter(spp_agegroup %in% c("301_1", "302_1", "63_1"))      
   #filter(spp_agegroup %in% c("121_1", "121_3"))
   #filter(spp_agegroup %in% c("196_1", "196_3"))
   filter(spp_agegroup %in% c("366_5", "206_1", "291_1", "291_3")) 
@@ -108,6 +111,6 @@ percent_diff_groups %>%
 
 abund_percent_diff %>%
   filter(spp_agegroup %in% c("196_1", "196_3", "371_1", "63_1", "121_1", "121_3", "366_5", "334_1", "302_1", "301_1", "331_1")) %>%
-  select(common_name, agecode, ten_year_mean, this_year_abundance, percent_diff_10_yr) %>%
-  arrange(common_name, agecode) %>%
+  select(common_name, ages, ten_year_mean, this_year_abundance, percent_diff_10_yr) %>%
+  arrange(common_name, ages) %>%
   write_csv("data derived/Table 2_1_3_2 species.csv")

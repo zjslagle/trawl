@@ -1,4 +1,4 @@
-source("1_read data - 2020 format.R")
+source("1_read data.R")
 
 
 #### Abundance Summary    ############################################################################
@@ -14,7 +14,8 @@ source("1_read data - 2020 format.R")
 # ON calculates their AC 2&4 catches from perch lengths (since 1998) 
 # based on variable length cutoff; Need to import those, split measured fish, and add to catch
 
-# import length cutoffs (get these from ON/Megan each year)
+# import length cutoffs (get these from ON/Megan each year;
+#         will be in the perch XLS, YRL LENGTHS tab, ON Max length in latest year row)
 cutoff <- read_csv("data sources/Ontario YEP age1-2 length breaks.csv")
 
 # calculate percent catch at ages 2 and 4
@@ -202,21 +203,31 @@ yearly_abundance_tall <- yearly_abundance_by_agency %>%
   summarize(total_abundance = sum(total_abundance),
             abundance_per_ha = round(total_abundance/375320,3)) %>%
   ungroup %>% 
-  left_join(spp_codes %>% select(-latin_name)) %>%
+  left_join(spp_codes %>% select(-latin_name, -notes)) %>%
   filter(spp_agegroup %in% c("61_1", "61_3", "63_1", "196_1", "196_3", "201_1", # filter "forage fish" only
                              "201_3", "180_1", "180_3", "204_1", "204_3", "206_1",
                              "206_3", "191_1", "191_3", "121_1", "121_3", "291_1",
                              "291_3", "366_5","301_1", "302_1", "331_1", "334_1",
                              "331_2", "334_2",
                              "371_1", "clupeid", "soft_ray", "spiny_ray", "all_forage")) %>%
+  left_join(agecodes) %>%
+  select(-total_abundance, -agecode)
+
+write_csv(yearly_abundance_tall, na = "",
+          "data derived/West Basin absolute abundance tall format.csv")
+
+# Same as previous, but keep all species/age classes
+yearly_abundance_tall_all_spp <- yearly_abundance_by_agency %>%
+  group_by(year, spp_agegroup, species, agecode) %>%
+  summarize(total_abundance = sum(total_abundance),
+            abundance_per_ha = round(total_abundance/375320,3)) %>%
+  ungroup %>% 
+  left_join(spp_codes %>% select(-latin_name)) %>%
   select(-total_abundance)
-
-write_csv(yearly_abundance_tall, "data derived/West Basin absolute abundance tall format.csv")
-
 
 # spread data and print - similar to older FTG SAS output
 yearly_abundance_total <- yearly_abundance_tall %>%
-  select(-species, -agecode, -common_name) %>%
+  select(-species, -common_name) %>%
   spread(key = spp_agegroup, value = abundance_per_ha) %>%
   select(year, "371_1", "196_3", "196_1", "63_1", "366_5", "191_3", "191_1", "204_1",
          "291_3", "291_1", "201_3", "201_1", "291_3", "291_1", "302_1",
@@ -245,7 +256,7 @@ write_csv(yearly_abundance_by_state, "data derived/West Basin absolute abundance
 ### calc percent difference between this years abundance and last 10 years   #####################
 abund_percent_diff <- yearly_abundance_tall %>%
   #filter(!spp_agegroup %in% c("all_forage", "clupeid", "soft_ray", "spiny_ray")) %>%
-  group_by(spp_agegroup, common_name, agecode) %>%
+  group_by(spp_agegroup, common_name, ages) %>% 
   summarize(ten_year_mean = round(mean(abundance_per_ha[which(year %in% seq(this_year-11,this_year-1))])+.001, 1),
             last_year_abundance = round(abundance_per_ha[which(year == this_year-1)]+.001, 1),
             this_year_abundance = round(abundance_per_ha[which(year == this_year)]+.001, 1),
@@ -254,8 +265,10 @@ abund_percent_diff <- yearly_abundance_tall %>%
             percent_diff_last_yr = if_else(is.finite(percent_diff_last_yr), percent_diff_last_yr, 0), #percentage change from 10 yr mean
             percent_diff_10_yr = if_else(is.finite(percent_diff_10_yr), percent_diff_10_yr, 0)) %>% 
   ungroup() %>%
-  arrange(common_name, agecode)
+  arrange(common_name, ages)
+# If Error (+/- 1 row per group), likely this_year isn't right
 
 write_csv(abund_percent_diff, "data derived/percent change.csv")
 
-#beep(2) # for some reason, this causes R to abort!
+beep(2) # for some reason, this causes R to abort sometimes!
+

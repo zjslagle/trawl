@@ -8,19 +8,22 @@ cols = c("clupeid" = "red", "spiny_ray" = "yellow", "soft_ray" = "deepskyblue")
 
 density_by_group <- yearly_abundance_tall %>%
   filter(spp_agegroup %in% c("clupeid", "spiny_ray", "soft_ray")) %>%
-  ggplot(aes(x = year, y = abundance_per_ha, group = spp_agegroup, fill = spp_agegroup))+
+  ggplot(aes(x = year, y = abundance_per_ha, fill = spp_agegroup))+
     geom_area(position = "stack", color = "black")+
     theme(axis.title = element_text(size=14, face = "bold"), 
           axis.text.y=element_text(size=14, color = "black"), 
-          axis.text.x=element_text(size=14, vjust=-1, color = "black"), axis.line = element_line(color = "black"), 
+          axis.text.x=element_text(size=14, vjust=-1, color = "black"), 
+          axis.line = element_line(color = "black"), 
           panel.background = element_blank(), 
           text = element_text(family = "Times"), 
           legend.position = c(.5, .9), legend.direction = "horizontal",
-          legend.text = element_text(size = 12)) +
+          legend.text = element_text(size = 12),
+          plot.margin = unit(c(.5,1,.5,.5), "cm")) + #fix 2023 being cut off
     scale_x_continuous(expand = c(0,0), breaks = seq(1988,this_year,by=5))+
     scale_y_continuous(expand = c(0,0))+
     labs(x="", y="Fish/ha")+
-    scale_fill_manual(name = "", values = cols, 
+    scale_fill_manual(name = "", 
+                      values = cols, 
                       breaks = c("clupeid", "spiny_ray", "soft_ray"),
                       labels = c("Clupeid", "Spiny-rayed", "Soft-rayed"))
 
@@ -82,22 +85,24 @@ yearly_abundance_tall %>%
   filter(spp_agegroup %in% c("196_3", "196_1")) %>% 
   ggplot(aes(x = year, y = abundance_per_ha, group = spp_agegroup, fill = spp_agegroup))+
   geom_area(position = "stack", alpha = .7, color = "grey60")+
-  #facet_grid(spp_agegroup ~ ., scales = "free", labeller = labeller(spp_agegroup = labs))+
-  theme(axis.title = element_text(size=14, face = "bold"),  
-        axis.text.y=element_text(size=14, color = "black"), 
-        axis.text.x=element_text(size=14, color = "black", vjust=-1), 
-        axis.line = element_line(color = "black"), 
-        panel.background = element_blank(), 
-        legend.position = c(.2, .9),
-        strip.background = element_rect(fill = "white", color = "black"), 
-        strip.text = element_text(face = "bold", size = 12),
-        legend.text = element_text(size = 12)) +
+  #facet_grid(spp_agegroup ~ ., scales = "free", labeller = labeller(spp_agegroup = labs))+ +
   scale_x_continuous(expand = c(0,0), breaks = seq(1988,this_year,by=5))+
   scale_y_continuous(expand = c(0,0))+
   labs(x="", y="Fish/ha")+
   scale_fill_manual(labels = labs, 
                     values = c("196_3" = "#fc8d59", "196_1" = "#91bfdb"),
-                    name = "")
+                    name = "")+
+  theme(axis.title = element_text(size=14, face = "bold"),  
+        axis.text.y=element_text(size=14, color = "black"), 
+        axis.text.x=element_text(size=14, color = "black", vjust=-1), 
+        axis.line = element_line(color = "black"), 
+        panel.background = element_blank(), 
+        text = element_text(family = "Times"),
+        legend.position = c(.2, .9),
+        strip.background = element_rect(fill = "white", color = "black"), 
+        strip.text = element_text(face = "bold", size = 12),
+        legend.text = element_text(size = 12),
+        plot.margin = unit(c(.5,1,.5,.5), "cm"))
 
 ggsave("figures/ftg report/fig 2_1_3_6 rel abundance emerald shiner.png", 
        width = 7, height = 4, units = "in",dpi = 600)
@@ -118,15 +123,19 @@ yearly_abundance_tall %>%
   scale_y_continuous(expand = c(0,0))+
   labs(x="", y="Fish/ha")
 
-ggsave("figures/rel abundance goby and and troutperch.png", 
+ggsave("figures/abundance/rel abundance goby and and troutperch.png", 
        width = 7, height = 5, units = "in",dpi = 600)
 
 
 ### Abundance graph for any species  #########################
-target_spp = "331_2"
+target_spp = 206
+target_ac = 1
+target_common = spp_codes$common_name[which(spp_codes$species == target_spp)]
+target_age_text = agecodes$ages[which(agecodes$agecode == target_ac)]
+
 
 yearly_abundance_tall %>%
-  filter(spp_agegroup == target_spp) %>% 
+  filter(common_name == target_common, ages == target_age_text) %>% 
   ggplot(aes(x = year, y = abundance_per_ha))+
   geom_area(position = "stack", color = "black")+
   theme(axis.title = element_text(size=14, face = "bold"), axis.text.y=element_text(size=14, color = "black"), 
@@ -136,41 +145,48 @@ yearly_abundance_tall %>%
   scale_x_continuous(expand = c(0,.5), breaks = seq(1988,this_year,by=5))+
   scale_y_continuous(expand = c(0,0))+
   labs(x = "", y = "Fish/ha", 
-       title = paste(target_spp, "relative abundance over time, West Basin Lake Erie"),
+       title = paste(target_age_text, target_common, "relative abundance over time, West Basin Lake Erie"),
        subtitle = "Source: interagency (OMNRF & ODNR) trawl data, 1988 - present")
 
-ggsave(paste("figures/rel abundance ", target_spp, ".png"), 
+ggsave(paste("figures/abundance/rel abundance", target_age_text, target_common, ".png"), 
        width = 7, height = 4, units = "in",dpi = 600)
 
 ### Graph - % change for species this year vs last 10 years  ###########
 
 # turn 2nd line on for top 5 +/- changes
 abund_percent_diff %>%
-  filter(!is.na(agecode)) %>%
+  filter(!is.na(ages)) %>%
   mutate(rank = rank(percent_diff_10_yr, ties.method = "random")) %>%
   filter(rank %in% c(1:5, seq(n(),n()-4))) %>% # get top and bottom five (biggest changes) - turn OFF for All Species
-  ggplot(aes(x = reorder(paste0(common_name, "-AC ", agecode), percent_diff_10_yr ), 
-             y = percent_diff_10_yr , fill = percent_diff_10_yr ))+
-    geom_col()+
+  ggplot(aes(x = reorder(paste0(common_name, "- ", ages), percent_diff_10_yr ), 
+             y = percent_diff_10_yr , fill = percent_diff_10_yr, group = spp_agegroup ))+
+    geom_col(color = "black")+
+    geom_hline(aes(yintercept = 0))+
     theme_minimal()+
     labs(y = paste("% difference: ", this_year, "- 10 yr mean"),
-         title = paste("Percent difference from", this_year, "vs 10 year mean"))+
+         title = paste("Percent difference between", this_year, "and the 10-yr mean"),
+         fill = "Percent\ndifference")+
     scale_fill_distiller(type = "div", palette = "RdBu", direction = 1)+
     scale_y_continuous(limits = c(-100, max(abund_percent_diff$percent_diff_10_yr)),
                        breaks = c(-100, 0, 200, 400, 600, 800, 1000, 1200, 1400),
                        labels = c("-100%", "0", "+200%", "+400%", "+600%", "+800%", "+1000%", "+1200%", "+1400%"))+
-    theme(axis.title = element_text(size=14, face = "bold"), axis.text.y=element_text(size=14, color = "black"), 
-          axis.text.x=element_text(size=14, vjust=1, hjust = 1, color = "black", angle = 45), axis.line = element_line(color = "black"),
+    theme(axis.title = element_text(size=14, face = "bold"), 
+          axis.text.y=element_text(size=14, color = "black"), 
+          axis.text.x=element_text(size=14, vjust=1, hjust = 1, color = "black", angle = 45), 
+          axis.line = element_line(color = "black"),
           axis.title.x = element_blank(), panel.grid.minor = element_blank(),
-          panel.background = element_blank(), text = element_text(family = "Times"),
-          strip.background = element_rect(fill = "white", color = "black"))
+          plot.background = element_rect(fill = "white"), 
+          text = element_text(family = "Times"),
+          strip.background = element_rect(fill = "white", color = "black"),
+          panel.grid = element_blank())
 
-ggsave("figures/percent difference - top 5.png", width = 7, height = 5, units = "in",dpi = 600)
+ggsave("figures/percent difference - top 5.png", #"figures/percent difference - top 5.png",
+       width = 7, height = 5, units = "in",dpi = 600)
 
 
 # Log scale (only for increases, log(negative number) is undefined)
 abund_percent_diff %>%
-  filter(!is.na(agecode)) %>%
+  filter(!is.na(ages)) %>%
   mutate(rank = rank(percent_diff_10_yr, ties.method = "random")) %>%
   filter(rank %in% c(seq(n(),n()-4))) %>% #top 5
   ggplot(aes(x = reorder(spp_agegroup, percent_diff_10_yr), y = percent_diff_10_yr, fill = percent_diff_10_yr))+
