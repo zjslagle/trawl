@@ -2,14 +2,11 @@ source("1_read data.R")
 
 # mapping libraries
 library(sf)
+library(ggspatial) # N arrow and scale bar
 library(tmap)
 library(mapview)
-this_year = year(now())#-1 #get this year
 
 ### Get effort data  (duplicates 1_read data)  #############################################################
-all_effort <- read_csv("data derived/all effort.csv")
-
-#source("1_read data - 2020 format.R") # <- may need this
 
 map_folder = "C:/Users/10173930/Documents/maps/shapefiles/" #work laptop
 #map_folder = "C:/Users/zakjs/Documents/Ohio DoW/Maps/" #personal laptop
@@ -33,6 +30,9 @@ two_min_grid <- st_read(paste(map_folder, "2 minute grids lakewide.shp", sep = "
 
 #bounding box
 wb_bounds = c(xmin = -83.5935, ymin = 41.3498, xmax = -82.4193, ymax = 42.1235)
+wb_bound_box = wb_bounds%>%
+  st_bbox() %>% st_as_sfc() %>% st_set_crs(4326)
+
 big_bounds = c(xmin = -83.7591, ymin = 41.166, xmax = -78.4966, ymax = 43.0727)%>%
   st_bbox() %>% st_as_sfc() %>% st_set_crs(4326)
 

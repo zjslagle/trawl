@@ -1,4 +1,4 @@
-source("1_read data - 2020 format.R")
+source("1_read data.R")
 
 ### FTG report - Mean length for YOY sportfish over time      ##########
 
@@ -13,7 +13,7 @@ mean_lengths <- all_lengths %>%
             n_length = n()) %>%
   ungroup
 
-#### Fig 2_3_3_1 - mean lengths for sportfish species
+#### Fig 2_3_3_1 - mean lengths for sportfish species   ##########################
 mean_lengths %>%
   filter(species %in% c(301, 302, 331, 334), agecode == 1) %>% 
   ggplot(aes(x = year, y = mean_length, group = common_name, lty = common_name, color = common_name))+
@@ -38,11 +38,24 @@ mean_lengths %>%
 
 ggsave("figures/ftg report/Fig 2_3_3_1 mean lengths.png", width = 6, height = 3.5, units = "in",dpi = 600)
 
-# text summary:
-mean_lengths %>% filter(species %in% c(334, 331, 302, 301), agecode == 1, year == this_year-1)
+### text summary    ###############################################
+mean_lengths %>% filter(species == 334, agecode == 1) %>% view
 mean_lengths %>% filter(species %in% c(334, 331, 302, 301), agecode == 1, year == this_year)
 
-#### Fig - mean lengths for sportfish species MINUS WAE
+# 10-yr means
+all_lengths %>%
+  left_join(all_effort %>% select(yrsam, year)) %>%
+  filter(!is.na(year), !is.na(length), year %in% (this_year-1):(this_year-10)) %>%
+  left_join(spp_codes) %>%
+  group_by(species, agecode, common_name) %>%
+  summarize(mean_length = mean(length),
+            sd_length = sd(length),
+            n_length = n()) %>%
+  ungroup %>%
+  filter(species %in% c(334, 331, 302, 301), agecode == 1)
+
+
+#### Fig - mean lengths for sportfish species MINUS WAE    #########################################
 mean_lengths %>%
   filter(species %in% c(301, 302, 331), agecode == 1) %>% 
   ggplot(aes(x = year, y = mean_length, group = common_name, lty = common_name, color = common_name))+
@@ -93,3 +106,4 @@ mean_lengths %>%
   filter(species == 196, agecode == 1) %>%
   ggplot(aes(x = year, y = mean_length))+
     geom_line()
+

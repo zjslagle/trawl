@@ -9,14 +9,16 @@ cols = c("clupeid" = "red", "spiny_ray" = "yellow", "soft_ray" = "deepskyblue")
 density_by_group <- yearly_abundance_tall %>%
   filter(spp_agegroup %in% c("clupeid", "spiny_ray", "soft_ray")) %>%
   ggplot(aes(x = year, y = abundance_per_ha, fill = spp_agegroup))+
-    geom_area(position = "stack", color = "black")+
+    geom_col(position = "stack", color = "black")+
     theme(axis.title = element_text(size=14, face = "bold"), 
           axis.text.y=element_text(size=14, color = "black"), 
           axis.text.x=element_text(size=14, vjust=-1, color = "black"), 
           axis.line = element_line(color = "black"), 
           panel.background = element_blank(), 
-          text = element_text(family = "Times"), 
-          legend.position = c(.5, .9), legend.direction = "horizontal",
+          text = element_text(family = "Times"),
+          legend.position = "inside",
+          legend.position.inside = c(.5, .9), 
+          legend.direction = "horizontal",
           legend.text = element_text(size = 12),
           plot.margin = unit(c(.5,1,.5,.5), "cm")) + #fix 2023 being cut off
     scale_x_continuous(expand = c(0,0), breaks = seq(1988,this_year,by=5))+
@@ -40,7 +42,7 @@ labs = c("334_1" = "Age-0 Walleye", "331_1" = "Age-0 Yellow Perch")
 yearly_abundance_tall %>%
   filter(spp_agegroup %in% c("334_1", "331_1")) %>%
   ggplot(aes(x = year, y = abundance_per_ha))+
-    geom_area(position = "stack", color = "black")+
+    geom_col(position = "stack", color = "black")+
     facet_grid(spp_agegroup ~ ., scales = "free", labeller = labeller(spp_agegroup = labs))+
     theme(axis.title = element_text(size=14, face = "bold"), 
           axis.text.y=element_text(size=14, color = "black"), 
@@ -63,7 +65,7 @@ labs = c("63_1" = "Age-0 Gizzard Shad", "301_1" = "Age-0 White Perch")
 yearly_abundance_tall %>%
   filter(spp_agegroup %in% c("63_1", "301_1")) %>% 
   ggplot(aes(x = year, y = abundance_per_ha))+
-  geom_area(position = "stack", color = "black")+
+  geom_col(position = "stack", color = "black")+
   facet_grid(spp_agegroup ~ ., scales = "free", labeller = labeller(spp_agegroup = labs))+
   theme(axis.title = element_text(size=14, face = "bold"), 
         axis.text.y=element_text(size=14, color = "black"), 
@@ -84,7 +86,7 @@ labs = c("196_3" = "Adult Emerald Shiner", "196_1" = "Age-0 Emerald Shiner")
 yearly_abundance_tall %>%
   filter(spp_agegroup %in% c("196_3", "196_1")) %>% 
   ggplot(aes(x = year, y = abundance_per_ha, group = spp_agegroup, fill = spp_agegroup))+
-  geom_area(position = "stack", alpha = .7, color = "grey60")+
+  geom_col(position = "stack", alpha = .7, color = "grey60")+
   #facet_grid(spp_agegroup ~ ., scales = "free", labeller = labeller(spp_agegroup = labs))+ +
   scale_x_continuous(expand = c(0,0), breaks = seq(1988,this_year,by=5))+
   scale_y_continuous(expand = c(0,0))+
@@ -98,7 +100,8 @@ yearly_abundance_tall %>%
         axis.line = element_line(color = "black"), 
         panel.background = element_blank(), 
         text = element_text(family = "Times"),
-        legend.position = c(.2, .9),
+        legend.position = "inside",
+        legend.position.inside = c(.23, .9),
         strip.background = element_rect(fill = "white", color = "black"), 
         strip.text = element_text(face = "bold", size = 12),
         legend.text = element_text(size = 12),
@@ -113,7 +116,7 @@ labs = c("366_5" = "Round Goby", "291_3" = "Adult Troutperch")
 yearly_abundance_tall %>%
   filter(spp_agegroup %in% c("366_5", "291_3")) %>%
   ggplot(aes(x = year, y = abundance_per_ha))+
-  geom_area(position = "stack", color = "black")+
+  geom_col(position = "stack", color = "black")+
   facet_grid(spp_agegroup ~ ., scales = "free", labeller = labeller(spp_agegroup = labs))+
   theme(axis.title = element_text(size=14, face = "bold"), axis.text.y=element_text(size=14, color = "black"), 
         axis.text.x=element_text(size=14, vjust=1, color = "black"), axis.line = element_line(color = "black"), 
@@ -128,8 +131,8 @@ ggsave("figures/abundance/rel abundance goby and and troutperch.png",
 
 
 ### Abundance graph for any species  #########################
-target_spp = 206
-target_ac = 1
+target_spp = 191
+target_ac = 3
 target_common = spp_codes$common_name[which(spp_codes$species == target_spp)]
 target_age_text = agecodes$ages[which(agecodes$agecode == target_ac)]
 
@@ -137,19 +140,21 @@ target_age_text = agecodes$ages[which(agecodes$agecode == target_ac)]
 yearly_abundance_tall %>%
   filter(common_name == target_common, ages == target_age_text) %>% 
   ggplot(aes(x = year, y = abundance_per_ha))+
-  geom_area(position = "stack", color = "black")+
-  theme(axis.title = element_text(size=14, face = "bold"), axis.text.y=element_text(size=14, color = "black"), 
-        axis.text.x=element_text(size=14, vjust=1, color = "black"), axis.line = element_line(color = "black"), 
-        panel.background = element_blank(), text = element_text(family = "Times"), legend.position = "top",
-        strip.background = element_rect(fill = "white", color = "black"), strip.text = element_text(face = "bold", size = 12)) +
+  geom_col(position = "stack", color = "black")+
+  theme(axis.title = element_text(size=20, face = "bold"), 
+        axis.text.y=element_text(size=20, color = "black"), 
+        axis.text.x=element_text(size=20, vjust=1, color = "black"), 
+        axis.line = element_line(color = "black"), 
+        panel.background = element_blank(), 
+        text = element_text(family = "Times")) +
   scale_x_continuous(expand = c(0,.5), breaks = seq(1988,this_year,by=5))+
   scale_y_continuous(expand = c(0,0))+
   labs(x = "", y = "Fish/ha", 
-       title = paste(target_age_text, target_common, "relative abundance over time, West Basin Lake Erie"),
-       subtitle = "Source: interagency (OMNRF & ODNR) trawl data, 1988 - present")
+        title = paste(target_age_text, target_common, "relative abundance over time, West Basin Lake Erie"),
+        subtitle = "Source: interagency (OMNRF & ODNR) trawl data, 1988 - present")
 
 ggsave(paste("figures/abundance/rel abundance", target_age_text, target_common, ".png"), 
-       width = 7, height = 4, units = "in",dpi = 600)
+       width = 13, height = 5.5, units = "in",dpi = 600)
 
 ### Graph - % change for species this year vs last 10 years  ###########
 
@@ -158,7 +163,7 @@ abund_percent_diff %>%
   filter(!is.na(ages)) %>%
   mutate(rank = rank(percent_diff_10_yr, ties.method = "random")) %>%
   filter(rank %in% c(1:5, seq(n(),n()-4))) %>% # get top and bottom five (biggest changes) - turn OFF for All Species
-  ggplot(aes(x = reorder(paste0(common_name, "- ", ages), percent_diff_10_yr ), 
+  ggplot(aes(x = reorder(paste0(common_name, "- ", ages), percent_diff_10_yr), 
              y = percent_diff_10_yr , fill = percent_diff_10_yr, group = spp_agegroup ))+
     geom_col(color = "black")+
     geom_hline(aes(yintercept = 0))+
@@ -189,7 +194,8 @@ abund_percent_diff %>%
   filter(!is.na(ages)) %>%
   mutate(rank = rank(percent_diff_10_yr, ties.method = "random")) %>%
   filter(rank %in% c(seq(n(),n()-4))) %>% #top 5
-  ggplot(aes(x = reorder(spp_agegroup, percent_diff_10_yr), y = percent_diff_10_yr, fill = percent_diff_10_yr))+
+  ggplot(aes(reorder(paste0(common_name, "- ", ages), percent_diff_10_yr ), 
+             y = percent_diff_10_yr, fill = percent_diff_10_yr))+
   geom_col(col = "black")+
   theme_minimal()+
   labs(y = paste("Log % difference: ", this_year, "- 10 yr mean"))+
@@ -201,3 +207,56 @@ abund_percent_diff %>%
         panel.background = element_blank(), text = element_text(family = "Times"),
         strip.background = element_rect(fill = "white", color = "black"))
 
+### other YOYs (inc. percid indices) ############################
+species_vec = c(063, 196, 301, 331, 334)
+
+for(i in 1:length(species_vec)){
+  target_species = species_vec[i]
+  target_common = spp_codes$common_name[which(spp_codes$species == target_species)]
+  
+  abund_graph <- yearly_abundance_tall %>%
+    filter(species == target_species, agecode == 1) %>%
+    ggplot(aes(x = year, y = abundance_per_ha))+
+    geom_col(color = "black")+
+    scale_x_continuous(expand = c(0,.5), breaks = seq(1988,this_year,by=5))+
+    scale_y_continuous(expand = c(0,0))+
+    labs(x="", y="Abundance (fish/ha)")+
+    labs(title = paste("Age-0", target_common))+
+    theme(axis.title = element_text(size=12, face = "bold"), axis.text.y=element_text(size=12, color = "black"), 
+          axis.text.x=element_text(size=14, vjust=1, color = "black"), axis.line = element_line(color = "black"), 
+          panel.background = element_blank(), text = element_text(family = "Times"),
+          plot.margin = unit(c(3,1,1,1), "mm"))
+  
+  ggsave(filename = paste0("figures/abundance/abundance Age-0 ", target_common, ".png"),
+         plot = abund_graph,
+         width = 7, height = 4, units = "in", dpi = 600)
+}
+
+### POWERPOINT - whatever spp    ############################
+species_vec = c(341)
+target_agecode = 3
+
+for(i in 1:length(species_vec)){
+  target_species = species_vec[i]
+  target_common = spp_codes$common_name[which(spp_codes$species == target_species)]
+  
+  abund_graph <- yearly_abundance_tall %>%
+    filter(species == target_species, agecode == target_agecode) %>%
+    ggplot(aes(x = year, y = abundance_per_ha))+
+    geom_col(color = "black", fill = "orangered")+
+    scale_x_continuous(expand = c(0,.5), breaks = seq(1988,this_year,by=5))+
+    scale_y_continuous(expand = c(0,0))+
+    labs(x="", y="Abundance (fish/ha)")+
+    labs(title = paste("Age-0", target_common))+
+    theme(axis.title = element_text(size=20, face = "bold"), 
+          axis.text.y=element_text(size=20, color = "black"), 
+          axis.text.x=element_text(size=22, vjust=1, color = "black"), 
+          axis.line = element_line(color = "black"), 
+          panel.background = element_blank(), 
+          text = element_text(family = "Times"),
+          plot.margin = unit(c(3,1,1,1), "mm"))
+  
+  ggsave(filename = paste0("figures/abundance/powerpoint/abundance agecode",target_agecode," ", target_common, ".png"),
+         plot = abund_graph,
+         width = 13, height = 6, units = "in", dpi = 600)
+}

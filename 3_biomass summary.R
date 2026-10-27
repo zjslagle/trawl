@@ -7,8 +7,21 @@ source("2_abundance summary.R")
 #   Code finally working Nov 2021. Z Slagle
 
 ### Calculate Biomass by site, so we can estimate biomass for species-years   ###########################
-#read Length-weight regression data (need to redo these at some point, who knows how old these are!)
-l_w_reg <- read_excel("data sources/forlenwt.xls") %>% janitor::clean_names()
+#read Length-weight regression data; started "new" one in 2025, as the old version lacked some L-W regressions (AC 3-4 White Perch for ex.)
+# I suspect that this was intentional (probably trawl isn't a great gear to catch adult White Perch), but folks do want these data
+#  as an index at least. 
+#   *** Code to produce this is in the Ohio-only trawl project.***
+
+#l_w_reg <- read_excel("data sources/forlenwt.xls") %>% janitor::clean_names()
+l_w_reg_new <- read_csv("data sources/forlenwt - new 2025.csv") %>% janitor::clean_names()
+
+### Generic length   ####################################
+#use measured fish to create a generic mean/sd for EVERY spp-ageclass, so we can use this if ZERO fish were measured
+# in a given sample (ex: adult White Perch; New in 2025)
+generic_length <- all_lengths %>% 
+  group_by(species, agecode) %>%
+  summarize(mean_length = mean(length, na.rm = T),
+            sd_length = if_else(n() > 1, sd(length, na.rm = T), 0)) %>% ungroup
 
 ### Make new Tibble with simulated TL for unmeasured fish and estimated wts (from L-W reg) ##########################################
 #need to count how many actually measured lengths we have, then add rows for "unknown length" fish to estimate TL
@@ -24,16 +37,39 @@ lengths_to_make <- catch_summary %>%
   left_join(length_summary) %>% 
   mutate(n_lengths = if_else(is.na(n_lengths), 0, as.double(n_lengths)), # turn NA -> zero
          n_lengths_to_make = sum_catch - n_lengths) %>%                 # calc N lengths to make
-  filter(n_lengths_to_make > 0, n_lengths > 0) %>%                  #remove species/age classes that we don't measure (e.g. adult sportfish)
+  filter(n_lengths_to_make > 0) %>%                  #remove species/age classes that don't req. new lengths
   select(crn, year, agency, yrsam, species, agecode, mean_length, sd_length, n_lengths_to_make)
-  
+
+### Handle cases where catch > 0 but no fish were measured    ####################################
+
+# these are spp/agecodes that WILL NOT get any biomass b/c there's zero measured lengths in the database!
+# lengths_to_make %>% 
+#   filter(is.na(mean_length)) %>%
+#   select(-mean_length, -sd_length) %>%
+#   left_join(generic_length) %>%
+#   filter(is.na(mean_length)) %>% select(species, agecode) %>% unique %>% left_join(spp_codes) %>% view
+
+# for any catches w/ zero lengths, join generic_length data so we can still generate lengths
+generic_lengths_to_make <- lengths_to_make %>%
+  filter(is.na(mean_length)) %>%
+  select(-mean_length, -sd_length) %>%
+  left_join(generic_length) %>%
+  filter(!is.na(mean_length))
+
+#remake tibble by combining original with generic
+lengths_to_make <- lengths_to_make %>%
+  filter(!is.na(mean_length)) %>%
+  full_join(generic_lengths_to_make)
+
 sum(lengths_to_make$n_lengths_to_make) # new dataframe needs this many rows
 
 # new data frame with empty lengths
 new_lengths <- lengths_to_make[rep(row.names(lengths_to_make), lengths_to_make$n_lengths_to_make), 1:8] 
 
-# did we do it right? should be TRUE
-sum(lengths_to_make$n_lengths_to_make) == nrow(new_lengths) # Yay!
+# This is the discrepancy b/t the two. These rows get NO BIOMASS due to the issue (above)
+sum(lengths_to_make$n_lengths_to_make) - nrow(new_lengths) 
+
+### Simulate lengths and generate weights using L-W regressions    #####################################
 
 # draw simulated lengths from a normal dist
 new_lengths <- new_lengths %>%
@@ -51,44 +87,33 @@ full_lengths <- all_lengths %>%
   arrange(agency, crn, species, agecode)
 
 
-# view cases where catch != total lengths...
-# errors in database? missing catch when we had catch? or bad CRNs?
-# full_lengths %>%
-#   group_by(crn, yrsam, species, agecode) %>%
-#     summarize(total_lengths = n()) %>%
-#   full_join(catch_summary %>% 
-#               select(crn, yrsam, species, agecode, sum_catch)) %>%
-#   mutate(diff = total_lengths - sum_catch) %>%
-#   filter(diff != 0) %>% view
-
 # generate weights based on old L-W regression
 combo_length_data <- full_lengths %>%
-  left_join(l_w_reg) %>%
-  mutate(weight = int * (length ^ slope)) %>% 
+  left_join(l_w_reg_new) %>%
+  mutate(weight = int * (length ^ slope)) %>%  
   select(crn, yrsam, agency, species, agecode, length, weight)
 
-catch_summary %>%
-  filter(crn == 948027, species == 63)
 
-### Estimate biomass per m^2 ###############################
+###   Estimate biomass per m^2     ##################################################################
 # Much of this code duplicates that found in "2_cpha and abundance summary.R"
 # Apply FPCs and generate biomass per m^2 by site
 
 #first, get biomass per site
 biomass_summary_by_site <- combo_length_data %>%
   group_by(crn, yrsam, agency, species, agecode) %>%
-    summarize(total_weight = sum(weight)) %>%
+    summarize(total_catch = n(),
+              total_weight = sum(weight)) %>%
   ungroup() %>% # so complete() can function properly
   full_join(all_effort %>% select(projcode, agency, crn, yrsam, year, #join effort data
                                   effdist, effstat, depth, longitude, latitude)) %>% 
   complete(nesting(projcode, agency, crn, yrsam, year,# make explicit zeros - ORDER MATTERS HERE! must complete() AFTER effort joined, otherwise we lose sites w/ zero catch
                    effdist, effstat, depth, longitude, latitude),           
            nesting(species, agecode), 
-           fill = list(total_weight = 0)) %>%
+           fill = list(total_catch = 0, total_weight = 0)) %>%
   filter(effstat == 1, year != 1987, !is.na(effdist)) %>% 
   mutate(depth_strata = case_when(depth > 6 ~ "deep", #called DEPT = 2 in old code
                                   T ~ "shallow"),
-         effdist = effdist * 1852, #convert nautical miles to meters
+         effdist_meters = effdist * 1852, #convert nautical miles to meters
          #next section applies fishing power corrections; first for OH trawl before 2002:
          total_weight = case_when((agency == "OH" & year < 2002) ~ case_when(species == 63 & agecode == 1   ~ total_weight*1.216,
                                                                           species == 196 & agecode == 1  ~ total_weight*2.170,
@@ -122,9 +147,10 @@ biomass_summary_by_site <- combo_length_data %>%
          country = case_when((agency == "ON" & longitude < -83.2900) ~ "US", # far west sites are Michigan sites trawled by ON, so need to be classified into MI/OH waters
                            agency == "ON" ~ "CAN",
                            T ~ "US"),
-         area_swept = effdist * wings,
+         area_swept = effdist_meters * wings,
          ha_swept = area_swept/10000,
-         biomass_per_area = total_weight/area_swept) # units are per grams per m2
+         biomass_per_area = total_weight/area_swept,
+         biomass_kg_ha = (biomass_per_area/1000)/375320) # units are per grams per m2
 
 # Output biomass by site - test for now
  # write_csv(biomass_summary_by_site %>% #filter(year == 2021, species == 331, agecode == 1) %>%
@@ -208,6 +234,8 @@ biomass_summary_groups <- biomass_summary_all_spp %>%
   filter(!is.na(group)) %>%
   bind_rows(biomass_summary_total)
 
+# write_csv(biomass_summary_groups,
+#           "data derived/data requests/2025_04_30 West Basin basinwide biomass estimate by preyfish group.csv")
 
 ### Output biomass into older formats   ########################################
 

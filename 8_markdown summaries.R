@@ -3,14 +3,13 @@ source("2_abundance summary.R")
 
 this_year # make sure this is ACTUALLY this year!
 
-### EFFORT ###################################################
 #count trawl sites, count # of low DO sites
 effort_summary <- all_effort %>%
   filter(year == this_year) %>%  # filter(is.na(botoxy < 2)) %>% select(crn, botoxy)
   summarize(trawl_sites = n(),
             good_trawl_sites = sum(effstat == 1),
-            bad_trawl_sites = sum(effstat %in% 2:6),
-            low_do_sites = sum(botoxy < 2, na.rm = T),
+            bad_trawl_sites = sum(!(effstat %in% 0:1)),
+            low_do_sites = sum(effstat == 0),
             missing_do_sites = sum(is.na(botoxy)))
 
 ### INDICES    ###############################################

@@ -8,7 +8,8 @@ index_by_state <- yearly_abundance_by_agency %>%
   left_join(spp_codes) %>%
   group_by(year, spp_agegroup, common_name, species, agecode, state) %>%
   summarize(total_abundance = sum(total_abundance),
-            abundance_per_ha = round(total_abundance/375320,2)) 
+            abundance_per_ha = round(total_abundance/375320,2)) %>%
+  mutate(state = if_else(state == "CA", "ON", "OH"))
 
 # GRAPH - abundance split by country
 index_by_state %>%
@@ -16,8 +17,9 @@ index_by_state %>%
   ggplot(aes(x = year, y = abundance_per_ha, fill = state))+
   geom_col(color = "black", linewidth = .3)+
   facet_grid(common_name ~ ., scales = "free_y")+
-  labs(y = "Abundance (n/ha)", fill = "Country")+
+  labs(y = "Abundance (n/ha)", fill = "State/Province")+
   scale_fill_brewer(palette = "Set3")+
+  scale_x_continuous(expand = c(0,.5), breaks = seq(1988,this_year,by=5))+
   scale_y_continuous(expand = c(0, 0)) +
   theme_minimal()+
   theme(strip.text = element_text(size = 12, face = "bold"),
@@ -43,7 +45,7 @@ percentage %>%
   ggplot(aes(x = year, y = percent_contribution, fill = state))+
   geom_col(color = "black", linewidth = .3)+
   facet_grid(common_name ~ ., scales = "free_y")+
-  labs(y = "Percent contribution to index", fill = "Country")+
+  labs(y = "Percent contribution to index", fill = "State/Province")+
   scale_fill_brewer(palette = "Set3")+
   scale_y_continuous(expand = c(0, 0)) +
   theme_minimal()+
@@ -51,7 +53,7 @@ percentage %>%
         axis.text = element_text(size = 10, color = "black"),
         axis.title.x = element_blank(),
         panel.grid = element_blank(),
-        plot.background = element_rect(fill = "white"),
+        plot.background = element_rect(fill = "white", color = NA),
         panel.border = element_rect(color = "grey50", fill = NA))
 
 ggsave("figures/country contribution/percid index contribution - percentage.png", 
@@ -61,7 +63,7 @@ ggsave("figures/country contribution/percid index contribution - percentage.png"
 # GRAPH - percentage trend of US contribution to catches
 percentage %>%
   filter(agecode == 1, species %in% c(331, 334)) %>% 
-  filter(state == "US") %>%
+  filter(state == "OH") %>%
   ggplot(aes(x = year, y = percent_contribution))+
   geom_point(color = "black")+
   geom_smooth()+
@@ -69,13 +71,14 @@ percentage %>%
   labs(y = "Percent contribution to index",
        title = "Trends in US Contribution to Interagency Trawl Index")+
   scale_fill_brewer(palette = "Set3")+
+  scale_x_continuous(expand = c(0,.5), breaks = seq(1988,this_year,by=5))+
   scale_y_continuous(expand = c(0, 0), limits = c(0,1))+
   theme_minimal()+
   theme(strip.text = element_text(size = 12, face = "bold"),
         axis.text = element_text(size = 10, color = "black"),
         axis.title.x = element_blank(),
         panel.grid = element_blank(),
-        plot.background = element_rect(fill = "white"),
+        plot.background = element_rect(fill = "white", color = NA),
         panel.border = element_rect(color = "grey50", fill = NA),
         panel.spacing = unit(5, "mm"))
 
@@ -95,13 +98,14 @@ for(i in 1:length(spp_to_graph)){
   age <- unique(percentage$ages[which(percentage$spp_agegroup == spp_to_graph[i])])
   
   graph <- percentage %>%
-    filter(state == "US", spp_agegroup == spp_to_graph[i]) %>%
+    filter(state == "OH", spp_agegroup == spp_to_graph[i]) %>%
     ggplot(aes(x = year, y = percent_contribution))+
     geom_point(color = "black")+
     geom_smooth()+
     labs(y = "Percent contribution to index",
-         title = paste0(age, " ", common, " - US Contribution to Interagency Trawl Index"))+
+         title = paste0(age, " ", common, " - Ohio Contribution to Interagency Trawl Index"))+
     scale_fill_brewer(palette = "Set3")+
+    scale_x_continuous(expand = c(0,.5), breaks = seq(1988,this_year,by=5))+
     scale_y_continuous(expand = c(0, 0), limits = c(0,1))+
     theme_minimal()+
     theme(strip.text = element_text(size = 12, face = "bold"),
@@ -118,3 +122,4 @@ ggsave(plot = graph,
               "index contribution.png"), 
        width = 7, height = 4, units = "in", dpi = 600)
 }
+

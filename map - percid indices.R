@@ -24,18 +24,18 @@ for(i in 1:length(species_to_map)){
                          colours = c('white', "#FEECE3", "orangered"),
                          values = c(0, .00001, 1))+
     guides(fill = guide_legend(), size = guide_legend())+ #combines legends
-    ggsn::scalebar(dist = 15, model = "WGS84",location = "topright", dist_unit = "km", 
-                   x.min = wb_bounds["xmin"], y.min = wb_bounds["ymin"], 
-                   x.max = wb_bounds["xmax"], y.max = wb_bounds["ymax"],
-                   st.dist = .03, anchor = c(x = -83.2, y = 41.4), transform = TRUE,
-                   border.size = .5, st.size = 3)+
-    ggsn::north(x.min = wb_bounds["xmin"], y.min = wb_bounds["ymin"], 
-                x.max = wb_bounds["xmax"], y.max = wb_bounds["ymax"],
-                location = "topright", symbol = 3, anchor = c(x = -83.33, y = 41.5))+
+    annotation_north_arrow(which_north = "true",
+                           location = "tl")+
+    annotation_scale(unit_category = "metric", #add scale after red OH line
+                     location = "br")+
+    labs(caption = this_year)+
     theme_minimal()+
     theme(axis.text = element_blank(), axis.title = element_blank(),
-          plot.background = element_rect(fill = "white", color = NA))
+          plot.background = element_rect(fill = "white", color = NA),
+          legend.position = "inside",
+          legend.position.inside = c(.15, .15))
   
   ggsave(filename = paste0("figures/maps/percid indices/age-0 ", species_to_map[i], " map.png"),
-         width=7, height=5, units="in", dpi=400, pointsize=12)
+         width=6, height=5, units="in", dpi=400, pointsize=12)
 }
+

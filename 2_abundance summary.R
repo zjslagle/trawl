@@ -84,21 +84,21 @@ catch_summary <- catch_summary %>%
 ### Apply Fishing Power Corrections and calculate abundance per area   ###################################
 #Use  nested case_when calls to find cases of Ohio trawl prior to 2002 and applying one
 # fishing correction to them, then finding Ohio trawls 2002-present and applying another.
-#  We are adjusting 2 diff OH vessels (RVs Explorer/Gibraltar and Explorer II) to the fishing power of 
-# Ontario's vessel (R/V Keenosay).
+#  We are adjusting 2 diff OH vessels (RVs Explorer/Gibraltar and last Explorer) to the fishing power of 
+# Ontario's vessel (R/V Keenosay). See Tyson et al. (2006) for full explanation.
  
 catch_per_area <- catch_summary %>%
   mutate(depth_strata = case_when(depth > 6 ~ "deep", #called DEPT = 2 in old code
                                   T ~ "shallow"),
-         effdist = effdist * 1852, #convert nautical miles to meters
+         effdist_meters = effdist * 1852, #convert nautical miles to meters
          wings = case_when(agency == "OH" ~ case_when(year < 2002 ~ 4.83,
-                                                      year > 2001 ~ 5.0,
+                                                      year > 2001 ~ 5.0, # wingspread measured with sidescan. FTG Report 2009
                                                       T ~ NA_real_),#must use NA_real_, else we get a matching error
                            agency == "ON" ~ 5.02),
          state = case_when((agency == "ON" & longitude < -83.2900) ~ "US", # ON-fished sites in MI waters 1988-95; these get summarized in US waters
                            agency == "ON" ~ "CA",
                            T ~ "US"),
-         area_swept = effdist * wings,
+         area_swept = effdist_meters * wings,
          fish_per_area = sum_catch/area_swept) %>% #catch per m^2
   #apply Fishing Power Corrections (see Tyson et al. 2006)
   mutate(fish_per_area = case_when((agency == "OH" & year < 2002) ~ case_when(spp_agegroup == "63_1" ~ fish_per_area*1.216,
@@ -184,7 +184,7 @@ mean_cpha_by_strata <- catch_summary_by_site %>%
 
 
 # Expand catch/ha to absolute abundance by agency based on estimated area across each depth strata;
-#   Estimates of area by depth strata are from Arcview exercise; SAS code claims "Summary attached" but it's not
+#   Estimates of area by depth strata are from old (pre-2010) Arcview exercise; SAS code claims "Summary attached" but it's not
 #     Then, calc fish/ha
 yearly_abundance_by_agency <- mean_cpha_by_strata %>%
   mutate(total_abundance = case_when(state == "CA" ~ case_when(depth_strata == "shallow" ~ mean_fish * 1.681E+8,
@@ -211,7 +211,7 @@ yearly_abundance_tall <- yearly_abundance_by_agency %>%
                              "331_2", "334_2",
                              "371_1", "clupeid", "soft_ray", "spiny_ray", "all_forage")) %>%
   left_join(agecodes) %>%
-  select(-total_abundance, -agecode)
+  select(-total_abundance)
 
 write_csv(yearly_abundance_tall, na = "",
           "data derived/West Basin absolute abundance tall format.csv")
@@ -240,7 +240,7 @@ write_csv(yearly_abundance_total, "data derived/West Basin absolute abundance.cs
 yearly_abundance_by_state <- yearly_abundance_by_agency %>%
   group_by(year, state, spp_agegroup) %>%
   summarize(total_abundance = sum(total_abundance),
-            abundance_per_ha = round(total_abundance/375320,2)) %>%
+            abundance_per_ha = round(total_abundance/375320,2)) %>% #convert to hectares
   ungroup %>% 
   filter(spp_agegroup %in% c("61_1", "61_3", "63_1", "196_1", "196_3", "201_1",
                              "201_3", "180_1", "180_3", "204_1", "204_3", "206_1",

@@ -30,51 +30,34 @@ trawl_sites <- all_effort %>%
 bad_sites <- filter(trawl_sites, status == "bad_trawl")
 low_do_sites <- filter(trawl_sites, status == "low_do")
 
-### Static Tmap Map   #############################################
-
-sites_tmap <- tm_shape(us_and_can, bbox = wb_bounds)+tm_fill()+ #plot land
-  tm_shape(urban_areas)+tm_fill(col = "wheat3")+ #plot cities
-  tm_shape(lake_erie)+tm_borders()+tm_fill(col="#ADD8E6")+ #plot lake, fill with blue
-  tm_shape(feature_names)+tm_text("NAME", size = .8, fontface = "bold", bg.color = "wheat3", bg.alpha = 1, xmod = 1)+
-  tm_shape(us_and_can)+tm_borders(col = "black", lty = 4)+ #redraw borders
-  tm_shape(trawl_sites)+tm_bubbles(scale = .5, col = "black", border.col = "black")+
-  #tm_shape(low_do_sites)+tm_bubbles(scale = .5, col = "blue", border.col = "black")+
-  tm_shape(bad_sites)+tm_bubbles(scale = .5, col = "firebrick1", border.col = "black")+
-  tm_scale_bar(breaks = c(0, 15, 30), position = c("left", "bottom"), text.size = 1)+
-  tm_add_legend(type = "symbol", labels = c("Low DO", "Bad trawl", "Normoxic"), 
-                col = c("blue", "firebrick1", "black"), alpha = 1)+
-  tm_layout(legend.position = c(.05,.14), legend.frame = "black", legend.bg.color = "white", fontfamily = "Times")
-
-tmap_save(sites_tmap,
-          filename = paste("figures/maps/trawl sites map ", this_year, ".png", sep = ""), 
-          width = 5, height = 4, units = "in", dpi = 500)
+### This_year effort Map   #############################################
 
 ggplot(data = trawl_sites)+
   scale_x_continuous(limits = c(wb_bounds["xmin"], wb_bounds["xmax"]))+
   scale_y_continuous(limits = c(wb_bounds["ymin"], wb_bounds["ymax"]))+
   geom_sf(data = us_and_can, fill = "lightyellow2")+
   geom_sf(data = lake_erie, fill = "#c5dfed")+
-  geom_sf(aes(fill = status), color = "black", shape = 21)+
+  geom_sf(aes(fill = status), color = "black", shape = 21, size = 2)+
   geom_sf(data = state_border, lty = 3)+
   scale_fill_manual(name = "Effort status",
-                      values = c("blue", "orangered", "black"),
+                      values = c("dodgerblue", "orangered", "black"),
                       breaks = c("low_do", "bad_trawl", "ok_do"),
                     labels = c("Hypoxic", "Bad", "Good"))+
-  ggsn::scalebar(dist = 15, model = "WGS84",location = "topright", dist_unit = "km", 
-                 x.min = wb_bounds["xmin"], y.min = wb_bounds["ymin"], 
-                 x.max = wb_bounds["xmax"], y.max = wb_bounds["ymax"],
-                 st.dist = .03, anchor = c(x = -83.2, y = 41.4), transform = TRUE,
-                 border.size = .5, st.size = 3, family = "Times New Roman")+
-  ggsn::north(x.min = wb_bounds["xmin"], y.min = wb_bounds["ymin"], 
-              x.max = wb_bounds["xmax"], y.max = wb_bounds["ymax"],
-              location = "topright", symbol = 3, anchor = c(x = -83.33, y = 41.5))+
+  annotation_north_arrow(which_north = "true",
+                         location = "bl")+
+  annotation_scale(unit_category = "metric", #add scale after red OH line
+                   location = "br")+
   theme_minimal()+
-  theme(axis.text = element_blank(), axis.title = element_blank(),
+  theme(axis.text = element_blank(), 
+        axis.title = element_blank(),
+        legend.position = "inside",
+        legend.position.inside = c(.1, .25),
+        legend.background = element_rect(fill = "white", color = "black"),
         plot.background = element_rect(fill = "white", color = NA),
         text = element_text(family = "Times New Roman"))
 
 ggsave(filename = paste0("figures/maps/", this_year, " effort map.png"),
-       width=7, height=5, units="in", dpi=400, pointsize=12)
+       width=8, height=7, units="in", dpi=400, pointsize=12)
 
 #### Interactive map   #########################
 library(mapview); library(RColorBrewer); library(leafem); library(leaflet)

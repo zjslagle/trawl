@@ -1,6 +1,6 @@
 source("2_abundance summary.R")
 
-# group up forage by Angler Report groups - unsure where they came from but whatever.
+# group up forage by Angler Report groups
 yearly_abundance_tall %>%
   mutate(group_angler = case_when(spp_agegroup == "all_forage" ~ "total",
                                   spp_agegroup == "clupeid" ~ "clupeid",

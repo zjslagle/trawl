@@ -5,7 +5,7 @@
 #     Much of the summarization code is based on SAS code written by Jeff Tyson (I think)
 #     This code written by Zak Slagle, ODNR-SARE, Started November 2018
 #     This particular code written Jan 2021 to read in data from an old database (Interagency Trawl XP)
-#     that has species data and a new format database that has OH and ON combine (Trawl Database through 2020,
+#     that has species data and a new format database that has OH and ON combined (Trawl Database through 2020,
 #     makes some of "Read Trawl Data.R" irrelevant).
 
 
@@ -37,9 +37,9 @@ agecodes = tibble(agecode = 1:5,
 
 ### Get newer (2020) data - different database with less data   #####################
 # Need to use the "parsed" database - OMNRF initially classifies many of their intermediate-sized fish as agecode 5, then
-# parses/allocates these fish afterwards into agecode 1 or 3 based on... length I guess? Need to ask Andy Cook.  
-#trawl_database <- odbcConnectAccess2007("data sources/ON21parse_OH21_ERIEWEST_TRAWL_IN_OH_FMT_Nov23.accdb")
-trawl_database <- odbcConnectAccess2007("data sources/ON24parse_OH24_ERIEWEST_TRAWL_IN_OH_FMT_Sept18_24.accdb")
+# parses/allocates these fish afterwards into agecode 1 or 3 based on otolith estimates... I think.  
+
+trawl_database <- odbcConnectAccess2007("data sources/ON&OH_TRAWL_ALL_YEARS_IN_OH_FMT_PARSE.accdb")
 
 #list tables in trawl database
 #sqlTables(trawl_database)
@@ -52,12 +52,6 @@ trawl_database <- odbcConnectAccess2007("data sources/ON24parse_OH24_ERIEWEST_TR
 
 # #close connection to DB
 odbcCloseAll()
-
-
-### Excel read-in - janky fix to Access driver issue ################################################
-# all_effort_raw <- read_xlsx("data sources/database excel files/EFFORT.xlsx")
-# all_catch_raw <- read_xlsx("data sources/database excel files/CATCH.xlsx")
-# all_lengths_raw <- read_xlsx("data sources/database excel files/LENGTH.xlsx")
 
 
 ### Reformat data    ##############################
@@ -83,30 +77,25 @@ all_lengths <- all_lengths_raw %>%
                 mutate(crn = as.character(crn))
 
 ####### Error Catching - Do keys (i.e., YRSAM and CRN) align across tables?    #################
-# are CRNs unique?
-all_effort %>%
-  group_by(year, crn) %>%
-  tally() %>%
-  filter(n>1)
 
 #mismatches b/t effort and catch - these will be filtered out/not used in summary!
 # these samples appear in catch but NOT effort
-all_catch %>% 
-  select(year, crn, projcode, agency, yrsam) %>% 
-  anti_join(all_effort) %>% 
+all_catch %>%
+  select(year, crn, projcode, agency, yrsam) %>%
+  anti_join(all_effort) %>%
   select(yrsam) %>% unique
 
 #vice versa - in effort but not catch (zero catches?)
-all_effort %>% 
+all_effort %>%
   filter(effstat == 1) %>% # there are many zero catches for effstat != 1
-  select(year, crn, projcode, agency, yrsam) %>% 
-  anti_join(all_catch) %>% 
-  group_by(yrsam) %>% summarize(count = n()) %>% tail
+  select(year, crn, projcode, agency, yrsam) %>%
+  anti_join(all_catch, by = c("year", "crn", "projcode", "agency", "yrsam")) %>%
+  group_by(yrsam) %>% summarize(count = n())
 
-all_lengths %>% 
-  select(crn, projcode, agency, yrsam) %>% 
-  anti_join(all_effort) %>% 
-  group_by(crn, yrsam) %>% 
+all_lengths %>%
+  select(crn, projcode, agency, yrsam) %>%
+  anti_join(all_effort) %>%
+  group_by(crn, yrsam) %>%
   summarize(count = n())
 
 ### Fix errors and make joins in each dataset ###########################
@@ -126,7 +115,7 @@ all_effort <- all_effort %>%
          effdist = if_else(is.na(effdist), speed*(effdur/60), effdist),
          effstat = case_when(botoxy <= 2 & year %in% c(2009:2012) ~ 0, #This codes matches ON/Andy's summary no explanation as for why.
                              botoxy <= 2 & !is.na(botoxy) & year %in% c(2016:this_year) ~ 0, 
-                             T ~ effstat))  #SAS note: TEMPORARY MEASURE TO HANDLE LOW DO 2009-2011 # LOL @ "temporary") 
+                             T ~ effstat))  #SAS note: TEMPORARY MEASURE TO HANDLE LOW DO 2009-2011 # (LOL @ "temporary") 
 
 
 # fix errors in catch
@@ -174,7 +163,7 @@ all_effort %>%
             n_na_effdist = sum(is.na(effdist) & effstat == 1)) # %>% view
 
 
-# theme with dark background and light colors for best PPT presentations
+# ggplot theme with dark background and light colors for best PPT presentations
 inverse_theme <- function(){theme_transparent()+
     theme(legend.position = "top",
           rect = element_rect(fill = NA),
